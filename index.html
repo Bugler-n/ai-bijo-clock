@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI美女時計</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Yusei+Magic&family=Hachi+Maru+Pop&family=Zen+Kurenaido&family=Klee+One:wght@600&family=Caveat:wght@700&family=Permanent+Marker&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0d12;
+    --fg: #f1eef3;
+    --fg-dim: #f1eef399;
+    --accent: #ff8fb8;
+    --header-h: 66px;
+    --pad: clamp(12px, 3vmin, 32px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
+               font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  #screen { position: fixed; inset: 0; }
+
+  /* 切り替え1回分 = 背景(ぼかし)+ 絵。まとめてクロスフェードする */
+  .layer { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
+  .layer.show { opacity: 1; }
+  .bg { position: absolute; inset: -60px; background-size: cover; background-position: center;
+        filter: blur(38px) saturate(1.15) brightness(.42); }
+  .layer::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                  background: radial-gradient(ellipse at 50% 45%, transparent 40%, #0008 100%); }
+
+  .scene { position: absolute; overflow: hidden; z-index: 1; background: #000; }
+  .scene img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+  .card {
+    position: absolute; left: 0; top: 0;
+    transform-origin: 0 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Yomogi", "Hiragino Maru Gothic ProN", cursive;
+    line-height: 1; white-space: nowrap;
+  }
+  .card span { display: inline-block; }
+  .card.dark span  { color: #1d2433; mix-blend-mode: multiply; opacity: .9; }
+  .card.chalk span { color: #f3f6f1; opacity: .92;
+                     text-shadow: 0 0 5px rgba(255,255,255,.55), 1px 1px 0 rgba(255,255,255,.25); }
+
+  /* ヘッダー */
+  header { position: fixed; z-index: 5; left: 0; right: 0; top: 0; height: var(--header-h);
+           padding: 0 calc(var(--pad) + 4px);
+           display: flex; align-items: center; justify-content: space-between; gap: 12px;
+           pointer-events: none; text-shadow: 0 1px 8px #000a; }
+  .brand { font-size: 18px; font-weight: 700; letter-spacing: .24em; }
+  .brand::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+                   background: var(--accent); margin-right: .9em; vertical-align: .12em;
+                   box-shadow: 0 0 10px var(--accent); }
+  /* 画面の左側・縦中央。絵と重なるほど狭い画面では上(ヘッダー)に戻す(body.compact) */
+  .brand-wrap { display: flex; flex-direction: column; gap: 7px;
+                position: fixed; left: calc(var(--pad) + 4px); top: 50%; transform: translateY(-50%); }
+  body:not(.compact) .brand { font-size: 30px; }
+  body:not(.compact) .tagline { font-size: 20px; }
+  body.compact .brand-wrap { position: static; transform: none; gap: 5px; }
+  .tagline { font-size: 14px; color: var(--fg-dim); letter-spacing: .14em; padding-left: calc(8px + .9em); }
+  .date { margin-left: auto; font-size: 15px; color: #f1eef380; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+
+  /* 秒の進み具合(目立たない細いバー) */
+  #sec { position: fixed; z-index: 5; left: 0; bottom: 0; height: 3px; width: 100%;
+         background: #ffffff14; pointer-events: none; }
+  #sec i { display: block; height: 100%; width: 100%; transform-origin: 0 50%; transform: scaleX(0);
+           background: linear-gradient(90deg, #ff8fb855, var(--accent)); opacity: .75; }
+  .bare #sec { display: none; }
+
+  /* 全画面ボタン(操作がないと消える) */
+  #fs { position: fixed; z-index: 5; right: calc(var(--pad) + 4px); bottom: calc(var(--pad) - 2px);
+        width: 38px; height: 38px; border-radius: 50%; border: 1px solid #ffffff33;
+        background: #0007; color: var(--fg); cursor: pointer; display: grid; place-items: center;
+        backdrop-filter: blur(6px); transition: opacity .4s ease, background .2s; }
+  #fs:hover { background: #000b; }
+  #fs svg { width: 18px; height: 18px; }
+  body.idle #fs { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
+
+  /* gallery.html の埋め込み用: ヘッダー・ボタン・余白なし */
+  .bare header, .bare #fs { display: none; }
+  .bare { --header-h: 0px; }
+  .bare .scene { border-radius: 0 !important; box-shadow: none !important; }
+
+  @media (max-width: 520px) {
+    :root { --header-h: 58px; }
+    .brand { font-size: 15px; letter-spacing: .16em; }
+    .tagline { font-size: 12px; letter-spacing: .1em; }
+    .date { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand-wrap">
+    <div class="brand">AI美女時計</div>
+    <div class="tagline">AIが織り成す、美と時の世界へ</div>
+  </div>
+  <div class="date" id="date"></div>
+</header>
+<div id="screen"></div>
+<div id="sec" aria-hidden="true"><i></i></div>
+<button id="fs" type="button" aria-label="全画面表示">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+</button>
+<script src="cards.js"></script>
+<script>
+(() => {
+  const screen = document.getElementById('screen');
+  if (new URLSearchParams(location.search).has('bare')) document.documentElement.classList.add('bare');
+  const params = new URLSearchParams(location.search);
+  const FIXED_TIME = /^\d{1,2}:\d{2}$/.test(params.get('t') || '') ? params.get('t') : null; // ?t=12:34
+  let manualIdx = params.has('img') ? (+params.get('img') % CARDS.length + CARDS.length) % CARDS.length : null; // ?img=5
+
+  // ---- ホモグラフィ: 単位矩形 (0,0)(W,0)(W,H)(0,H) → 四隅 q ----
+  function solve(A, b) {
+    const n = b.length;
+    for (let i = 0; i < n; i++) {
+      let p = i;
+      for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+      [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+      for (let r = i + 1; r < n; r++) {
+        const f = A[r][i] / A[i][i];
+        for (let c = i; c < n; c++) A[r][c] -= f * A[i][c];
+        b[r] -= f * b[i];
+      }
+    }
+    const x = new Array(n);
+    for (let i = n - 1; i >= 0; i--) {
+      let s = b[i];
+      for (let c = i + 1; c < n; c++) s -= A[i][c] * x[c];
+      x[i] = s / A[i][i];
+    }
+    return x;
+  }
+  function matrix3d(W, H, q) {
+    const src = [[0, 0], [W, 0], [W, H], [0, H]];
+    const A = [], b = [];
+    for (let i = 0; i < 4; i++) {
+      const [x, y] = src[i], [X, Y] = q[i];
+      A.push([x, y, 1, 0, 0, 0, -x * X, -y * X]); b.push(X);
+      A.push([0, 0, 0, x, y, 1, -x * Y, -y * Y]); b.push(Y);
+    }
+    const [a, bb, c, d, e, f, g, h] = solve(A, b);
+    return `matrix3d(${a},${d},0,${g}, ${bb},${e},0,${h}, 0,0,1,0, ${c},${f},0,1)`;
+  }
+  const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+
+  // ---- 時刻 → 画像(同じ分なら同じ絵。前の分とは必ず別の絵) ----
+  function hash(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  // 時計に使う画像(exclude 指定を除く)。?img=N での直接指定は除外画像も表示できる
+  const POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);
+  function pickIdx(d) {
+    const key = (dd) => `${dd.getFullYear()}-${dd.getMonth()}-${dd.getDate()}-${dd.getHours()}-${dd.getMinutes()}`;
+    const prev = new Date(d.getTime() - 60000);
+    const i = hash(key(d)) % POOL.length;
+    const p = hash(key(prev)) % POOL.length;
+    return POOL[i === p ? (i + 1) % POOL.length : i];
+  }
+
+  // ---- 手書き風フォント(分ごとに切り替わる)。scale は見た目の大きさ補正、stroke は太らせる量(em) ----
+  const FONTS = [
+    { name: 'Yomogi',          weight: 400, stroke: 0.035, scale: 1.00 },
+    { name: 'Yusei Magic',     weight: 400, stroke: 0.010, scale: 0.95, spacing: 0.06 },
+    { name: 'Hachi Maru Pop',  weight: 400, stroke: 0.030, scale: 1.00 },
+    { name: 'Zen Kurenaido',   weight: 400, stroke: 0.040, scale: 1.00 },
+    { name: 'Klee One',        weight: 600, stroke: 0.025, scale: 1.00 },
+    { name: 'Caveat',          weight: 700, stroke: 0.025, scale: 1.30, spacing: 0.06 },
+    { name: 'Permanent Marker',weight: 400, stroke: 0.000, scale: 0.95, spacing: 0.06 },
+    { name: 'Gaegu',           weight: 700, stroke: 0.020, scale: 1.15 },
+  ];
+  const FORCED_FONT = params.has('font') ? (+params.get('font') % FONTS.length + FONTS.length) % FONTS.length : null; // ?font=3
+
+  const measureCtx = document.createElement('canvas').getContext('2d');
+
+  // ---- シーン生成 ----
+  function buildScene(idx, text, seed) {
+    const c = CARDS[idx];
+    const scene = document.createElement('div');
+    scene.className = 'scene';
+
+    const img = document.createElement('img');
+    img.src = encodeURI(c.src);
+    img.alt = '';
+    scene.appendChild(img);
+
+    const q = c.quad;
+    const W = 1000;
+    const H = Math.round(W * ((dist(q[0], q[3]) + dist(q[1], q[2])) / 2) / ((dist(q[0], q[1]) + dist(q[3], q[2])) / 2));
+    const card = document.createElement('div');
+    card.className = 'card ' + c.ink;
+    card.style.width = W + 'px';
+    card.style.height = H + 'px';
+    // 文字を置く範囲(カード内の割合 [左,上,右,下])。手などで隠れる部分を避けるため画像ごとに指定できる
+    const [bx0, by0, bx1, by1] = c.box || [0.1, 0.15, 0.9, 0.85];
+    card.style.boxSizing = 'border-box';
+    card.style.padding = `${by0 * H}px ${(1 - bx1) * W}px ${(1 - by1) * H}px ${bx0 * W}px`;
+    card.style.transform = matrix3d(W, H, q);
+
+    const font = FONTS[FORCED_FONT !== null ? FORCED_FONT : hash(`font${text}${idx}`) % FONTS.length];
+    const span = document.createElement('span');
+    span.textContent = text;
+    span.style.fontFamily = `"${font.name}", "Yomogi", "Hiragino Maru Gothic ProN", cursive`;
+    span.style.fontWeight = font.weight;
+    span.style.letterSpacing = (font.spacing || 0) + 'em';
+    span.style.webkitTextStroke = `${font.stroke}em currentColor`;
+    span.style.paintOrder = 'stroke fill';
+    card.appendChild(span);
+    scene.appendChild(card);
+
+    // 手書きらしく、わずかな位置のズレ(分ごとに固定)。傾きはカードに合わせるため付けない
+    const r1 = ((seed % 97) / 97 - .5), r2 = ((seed % 53) / 53 - .5);
+    const fit = () => {
+      let fs = (by1 - by0) * H * 0.95 * font.scale;
+      span.style.fontSize = fs + 'px';
+      const maxW = (bx1 - bx0) * W;
+      if (span.offsetWidth > maxW) { fs *= maxW / span.offsetWidth; span.style.fontSize = fs + 'px'; }
+      // フォントごとに数字の上下位置が違うので、実際にインクが描かれる範囲を測って枠の中央に合わせる
+      let dx = 0, dy = 0;
+      try {
+        const ctx = measureCtx;
+        ctx.font = `${font.weight} ${fs}px "${font.name}"`;
+        const m = ctx.measureText(text);
+        const fa = m.fontBoundingBoxAscent, fd = m.fontBoundingBoxDescent;
+        const baseline = (fs - (fa + fd)) / 2 + fa;                 // line-height:1 の行ボックス上端からベースラインまで
+        const inkCenterY = baseline - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+        const inkCenterX = (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
+        const spacing = (font.spacing || 0) * fs;                   // 末尾の字間ぶん左に寄るのを補正
+        if (isFinite(inkCenterY) && isFinite(inkCenterX)) {
+          dy = fs / 2 - inkCenterY;
+          dx = (span.offsetWidth - spacing) / 2 - inkCenterX;
+        }
+      } catch (e) {}
+      span.style.transform = `translate(${dx + r2 * W * 0.01}px, ${dy + r1 * H * 0.01}px)`;
+    };
+    fit();
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load(`${font.weight} 100px "${font.name}"`, text).then(fit, () => {});
+    }
+    return scene;
+  }
+
+  // ヘッダーと余白を除いた領域の中央に、絵を最大サイズで収める。角丸と影は絵の拡大率に合わせて逆算する
+  function layout(layer, idx) {
+    const c = CARDS[idx];
+    const scene = layer.querySelector('.scene');
+    const rs = getComputedStyle(document.documentElement);
+    const bare = document.documentElement.classList.contains('bare');
+    const pad = bare ? 0 : Math.min(32, Math.max(12, Math.min(innerWidth, innerHeight) * 0.03));
+    const top = bare ? 0 : (parseFloat(rs.getPropertyValue('--header-h')) || 66);
+    const availW = innerWidth - pad * 2, availH = innerHeight - top - pad;
+    const IMAGE_SCALE = (bare || innerWidth < 520) ? 1 : 0.9;   // 絵を表示領域いっぱいではなく一回り小さく見せる
+    const s = Math.min(availW / c.w, availH / c.h) * IMAGE_SCALE;
+    const brand = document.querySelector('.brand-wrap');
+    const sideSpace = (innerWidth - c.w * s) / 2;           // 絵の左側に残る幅
+    const compact = bare || sideSpace < brand.offsetWidth + pad * 2 + 8;
+    document.body.classList.toggle('compact', compact);
+    // 絵の左側の余白の中央に置く(余白が広い画面ほど右に寄る)
+    brand.style.left = compact ? '' : Math.max(pad, (sideSpace - brand.offsetWidth) / 2) + 'px';
+    scene.style.left = innerWidth / 2 + 'px';
+    scene.style.top = top + availH / 2 + 'px';
+    scene.style.width = c.w + 'px';
+    scene.style.height = c.h + 'px';
+    scene.style.transform = `translate(-50%,-50%) scale(${s})`;
+    scene.style.borderRadius = 16 / s + 'px';
+    scene.style.boxShadow = `0 ${12 / s}px ${40 / s}px rgba(0,0,0,.55), 0 0 0 ${1 / s}px rgba(255,255,255,.08)`;
+  }
+
+  // ---- 表示切替(クロスフェード) ----
+  let current = null, currentIdx = -1;
+  function show(idx, text, seed) {
+    const scene = buildScene(idx, text, seed);
+    const layer = document.createElement('div');
+    layer.className = 'layer';
+    const bg = document.createElement('div');
+    bg.className = 'bg';
+    bg.style.backgroundImage = `url("${encodeURI(CARDS[idx].src)}")`;
+    layer.append(bg, scene);
+    layout(layer, idx);
+    screen.appendChild(layer);
+    const img = scene.querySelector('img');
+    const go = () => {
+      const old = current;
+      current = layer; currentIdx = idx;
+      setTimeout(() => {   // rAF はバックグラウンドタブで止まるので setTimeout を使う
+        layer.classList.add('show');
+        if (old) { old.classList.remove('show'); setTimeout(() => old.remove(), 1000); }
+      }, 30);
+    };
+    if (img.complete) go(); else { img.onload = go; img.onerror = go; }
+  }
+
+  function nowParts() {
+    const d = new Date();
+    if (FIXED_TIME) {
+      const [h, m] = FIXED_TIME.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+    }
+    const hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0');
+    return { d, text: `${hh}:${mm}`, seed: hash(`${hh}${mm}`) };
+  }
+
+  const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
+  const dateEl = document.getElementById('date');
+  let lastText = '';
+  function tick() {
+    const { d, text, seed } = nowParts();
+    dateEl.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
+    document.title = `${text} AI美女時計`;
+    if (text !== lastText || manualIdx !== null) {
+      const idx = manualIdx !== null ? manualIdx : pickIdx(d);
+      if (text !== lastText || idx !== currentIdx) show(idx, text, seed);
+      lastText = text;
+    }
+  }
+  function schedule() {
+    const ms = 60000 - (Date.now() % 60000) + 50;   // 次の「分」の頭
+    setTimeout(() => { tick(); schedule(); }, ms);
+  }
+
+  // 全画像を先読み
+  CARDS.forEach(c => { const i = new Image(); i.src = encodeURI(c.src); });
+
+  addEventListener('resize', () => { if (current) layout(current, currentIdx); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  // 確認用: ← → で画像を順に切り替え
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const base = manualIdx !== null ? manualIdx : currentIdx;
+    manualIdx = (base + (e.key === 'ArrowRight' ? 1 : -1) + CARDS.length) % CARDS.length;
+    lastText = ''; tick();
+  });
+
+  // 全画面ボタン / ダブルクリック。操作がない間はボタンとカーソルを隠す
+  const toggleFs = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  };
+  document.getElementById('fs').addEventListener('click', toggleFs);
+  addEventListener('dblclick', toggleFs);
+  let idleTimer;
+  const wake = () => {
+    document.body.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => document.body.classList.add('idle'), 3000);
+  };
+  ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, wake, { passive: true }));
+  wake();
+
+  // 秒バー: 分の頭で空、59秒で満タン。分が変わる瞬間は戻りをアニメーションさせない
+  const secBar = document.querySelector('#sec i');
+  function updateSec() {
+    const p = (Date.now() % 60000) / 60000;
+    secBar.style.transition = p < 0.02 ? 'none' : 'transform .25s linear';
+    secBar.style.transform = `scaleX(${p})`;
+  }
+  updateSec();
+  setInterval(updateSec, 250);
+
+  tick();
+  if (!FIXED_TIME) schedule();
+})();
+</script>
+</body>
+</html>
