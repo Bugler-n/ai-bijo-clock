@@ -20,14 +20,14 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
                font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
-  #screen { position: fixed; inset: 0; }
+  #screen { position: fixed; top: 0; right: 0; bottom: 0; left: 0; }
 
   /* 切り替え1回分 = 背景(ぼかし)+ 絵。まとめてクロスフェードする */
-  .layer { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
+  .layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; opacity: 0; transition: opacity .9s ease; }
   .layer.show { opacity: 1; }
-  .bg { position: absolute; inset: -60px; background-size: cover; background-position: center;
+  .bg { position: absolute; top: -60px; right: -60px; bottom: -60px; left: -60px; background-size: cover; background-position: center;
         filter: blur(38px) saturate(1.15) brightness(.42); }
-  .layer::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  .layer::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none;
                   background: radial-gradient(ellipse at 50% 45%, transparent 40%, #0008 100%); }
 
   .scene { position: absolute; overflow: hidden; z-index: 1; background: #000; }
@@ -101,6 +101,7 @@
   <div class="date" id="date"></div>
 </header>
 <div id="screen"></div>
+<noscript><p style="position:fixed;top:45%;width:100%;text-align:center">JavaScript を有効にしてください</p></noscript>
 <div id="sec" aria-hidden="true"><i></i></div>
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
