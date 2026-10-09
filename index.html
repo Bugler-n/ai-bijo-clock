@@ -157,11 +157,12 @@
   }
   // 時計に使う画像(exclude 指定を除く)。?img=N での直接指定は除外画像も表示できる
   const POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);
-  function pickIdx(d) {
-    const key = (dd) => `${dd.getFullYear()}-${dd.getMonth()}-${dd.getDate()}-${dd.getHours()}-${dd.getMinutes()}`;
-    const prev = new Date(d.getTime() - 60000);
-    const i = hash(key(d)) % POOL.length;
-    const p = hash(key(prev)) % POOL.length;
+  // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
+  const SWITCH_MS = 5000;
+  // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
+  function pickIdx(slot) {
+    const i = hash(`slot${slot}`) % POOL.length;
+    const p = hash(`slot${slot - 1}`) % POOL.length;
     return POOL[i === p ? (i + 1) % POOL.length : i];
   }
 
@@ -199,7 +200,7 @@
     card.style.width = W + 'px';
     card.style.height = H + 'px';
     // 文字を置く範囲(カード内の割合 [左,上,右,下])。手などで隠れる部分を避けるため画像ごとに指定できる
-    const [bx0, by0, bx1, by1] = c.box || [0.1, 0.15, 0.9, 0.85];
+    const [bx0, by0, bx1, by1] = c.box || [0.2, 0.2, 0.8, 0.8];
     card.style.boxSizing = 'border-box';
     card.style.padding = `${by0 * H}px ${(1 - bx1) * W}px ${(1 - by1) * H}px ${bx0 * W}px`;
     card.style.transform = matrix3d(W, H, q);
@@ -309,24 +310,26 @@
 
   const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
   const dateEl = document.getElementById('date');
-  let lastText = '';
+  let lastText = '', lastSlot = null;
   function tick() {
     const { d, text, seed } = nowParts();
     dateEl.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
     document.title = `${text} AI美女時計`;
-    if (text !== lastText || manualIdx !== null) {
-      const idx = manualIdx !== null ? manualIdx : pickIdx(d);
-      if (text !== lastText || idx !== currentIdx) show(idx, text, seed);
-      lastText = text;
+    const slot = FIXED_TIME ? 0 : Math.floor(Date.now() / SWITCH_MS);   // ?t= 指定時は絵を固定
+    if (text !== lastText || slot !== lastSlot || manualIdx !== null) {
+      const idx = manualIdx !== null ? manualIdx : pickIdx(slot);
+      if (text !== lastText || slot !== lastSlot || idx !== currentIdx) show(idx, text, seed);
+      lastText = text; lastSlot = slot;
     }
   }
   function schedule() {
-    const ms = 60000 - (Date.now() % 60000) + 50;   // 次の「分」の頭
+    const ms = SWITCH_MS - (Date.now() % SWITCH_MS) + 30;   // 次の区間の頭
     setTimeout(() => { tick(); schedule(); }, ms);
   }
 
   // 全画像を先読み
-  CARDS.forEach(c => { const i = new Image(); i.src = encodeURI(c.src); });
+  // (gallery.html の埋め込み = bare では先読みしない。枠の数 × 全画像の読み込みになってしまう)
+  if (!document.documentElement.classList.contains('bare')) CARDS.forEach(c => { const i = new Image(); i.src = encodeURI(c.src); });
 
   addEventListener('resize', () => { if (current) layout(current, currentIdx); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
