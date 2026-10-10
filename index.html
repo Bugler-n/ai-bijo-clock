@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Yusei+Magic&family=Hachi+Maru+Pop&family=Zen+Kurenaido&family=Klee+One:wght@600&family=Caveat:wght@700&family=Permanent+Marker&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Yusei+Magic&family=Gloria+Hallelujah&family=Covered+By+Your+Grace&family=Zen+Kurenaido&family=Rock+Salt&family=Nanum+Pen+Script&family=Permanent+Marker&family=Gaegu:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0e0d12;
@@ -39,7 +39,8 @@
     font-family: "Yomogi", "Hiragino Maru Gothic ProN", cursive;
     line-height: 1; white-space: nowrap;
   }
-  .card span { display: inline-block; }
+  .card > span { display: inline-block; }
+  .card .ch { display: inline-block; transform-origin: 50% 70%; }
   .card.dark span  { color: #1d2433; mix-blend-mode: multiply; opacity: .9; }
   .card.chalk span { color: #f3f6f1; opacity: .92;
                      text-shadow: 0 0 5px rgba(255,255,255,.55), 1px 1px 0 rgba(255,255,255,.25); }
@@ -168,18 +169,19 @@
 
   // ---- 手書き風フォント(分ごとに切り替わる)。scale は見た目の大きさ補正、stroke は太らせる量(em) ----
   const FONTS = [
-    { name: 'Yomogi',          weight: 400, stroke: 0.035, scale: 1.00 },
-    { name: 'Yusei Magic',     weight: 400, stroke: 0.010, scale: 0.95, spacing: 0.06 },
-    { name: 'Hachi Maru Pop',  weight: 400, stroke: 0.030, scale: 1.00 },
-    { name: 'Zen Kurenaido',   weight: 400, stroke: 0.040, scale: 1.00 },
-    { name: 'Klee One',        weight: 600, stroke: 0.025, scale: 1.00 },
-    { name: 'Caveat',          weight: 700, stroke: 0.025, scale: 1.30, spacing: 0.06 },
-    { name: 'Permanent Marker',weight: 400, stroke: 0.000, scale: 0.95, spacing: 0.06 },
-    { name: 'Gaegu',           weight: 700, stroke: 0.020, scale: 1.15 },
+    { name: 'Gloria Hallelujah', weight: 400, stroke: 0.026, scale: 0.95, spacing: 0.04 },
+    { name: 'Yusei Magic',       weight: 400, stroke: 0.024, scale: 0.95, spacing: 0.06 },
+    { name: 'Covered By Your Grace', weight: 400, stroke: 0.036, scale: 1.30, spacing: 0.03 },
+    { name: 'Zen Kurenaido',     weight: 400, stroke: 0.054, scale: 1.00 },
+    { name: 'Rock Salt',         weight: 400, stroke: 0.014, scale: 0.62, spacing: 0.02 },
+    { name: 'Nanum Pen Script',  weight: 400, stroke: 0.044, scale: 1.50, spacing: 0.03 },
+    { name: 'Permanent Marker',  weight: 400, stroke: 0.014, scale: 0.95, spacing: 0.06 },
+    { name: 'Gaegu',             weight: 700, stroke: 0.034, scale: 1.15 },
   ];
   const FORCED_FONT = params.has('font') ? (+params.get('font') % FONTS.length + FONTS.length) % FONTS.length : null; // ?font=3
 
   const measureCtx = document.createElement('canvas').getContext('2d');
+  let filterSeq = 0;
 
   // ---- シーン生成 ----
   function buildScene(idx, text, seed) {
@@ -195,19 +197,46 @@
     const q = c.quad;
     const W = 1000;
     const H = Math.round(W * ((dist(q[0], q[3]) + dist(q[1], q[2])) / 2) / ((dist(q[0], q[1]) + dist(q[3], q[2])) / 2));
+    const k = W / ((dist(q[0], q[1]) + dist(q[3], q[2])) / 2);   // カードの1pxが画像の何pxか(の逆数)
     const card = document.createElement('div');
     card.className = 'card ' + c.ink;
     card.style.width = W + 'px';
     card.style.height = H + 'px';
     // 文字を置く範囲(カード内の割合 [左,上,右,下])。手などで隠れる部分を避けるため画像ごとに指定できる
-    const [bx0, by0, bx1, by1] = c.box || [0.2, 0.2, 0.8, 0.8];
+    const [bx0, by0, bx1, by1] = c.box || [0.13, 0.16, 0.87, 0.84];
     card.style.boxSizing = 'border-box';
     card.style.padding = `${by0 * H}px ${(1 - bx1) * W}px ${(1 - by1) * H}px ${bx0 * W}px`;
     card.style.transform = matrix3d(W, H, q);
 
     const font = FONTS[FORCED_FONT !== null ? FORCED_FONT : hash(`font${text}${idx}`) % FONTS.length];
     const span = document.createElement('span');
-    span.textContent = text;
+    // 1文字ずつ大きさ・上下位置・傾きを少しずらす(カード全体の傾きは保ち、そこからの小さな揺れだけ)
+    const rnd = (k) => hash(`${seed}:${idx}:${k}`) / 4294967295 - 0.5;
+    const drift = rnd('drift') * 0.012;                      // 行全体のゆるい右上がり/右下がり
+    const chars = [...text].map((ch, i) => {
+      const c1 = document.createElement('span');
+      c1.className = 'ch';
+      c1.textContent = ch;
+      c1._j = { dy: rnd('y' + i), rot: rnd('r' + i), sc: rnd('s' + i), sp: rnd('p' + i), i };
+      span.appendChild(c1);
+      return c1;
+    });
+    // 手書きの線らしく輪郭を波打たせ、インクの濃淡ムラ(かすれ)とごく弱いぼかしを足すフィルター
+    const fid = 'hw' + (++filterSeq);
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '0'); svg.setAttribute('height', '0');
+    svg.style.position = 'absolute';
+    svg.innerHTML = `<filter id="${fid}" x="-10%" y="-25%" width="120%" height="150%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="2" seed="${seed % 997}" result="warp"/>
+      <feDisplacementMap in="SourceGraphic" in2="warp" scale="10" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" seed="${(seed % 991) + 7}" result="grain"/>
+      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.7 1.2" result="ga"/>
+      <feComposite in="d" in2="ga" operator="in" result="g2"/>
+      <feGaussianBlur in="g2" stdDeviation="0.8"/>
+    </filter>`;
+    scene.appendChild(svg);
+    span.style.filter = `url(#${fid})`;
     span.style.fontFamily = `"${font.name}", "Yomogi", "Hiragino Maru Gothic ProN", cursive`;
     span.style.fontWeight = font.weight;
     span.style.letterSpacing = (font.spacing || 0) + 'em';
@@ -216,10 +245,36 @@
     card.appendChild(span);
     scene.appendChild(card);
 
+    // ボード中央付近の色を測り、インクをそれに馴染む色にする(影になっていれば暗く、暖色光なら暖かく)
+    const tint = () => {
+      try {
+        const cw = 96, ch = Math.round(96 * c.h / c.w);
+        const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+        const cx = cv.getContext('2d', { willReadFrequently: true });
+        cx.drawImage(img, 0, 0, cw, ch);
+        const sc = cw / c.w; let r = 0, g = 0, b = 0, n = 0;
+        for (const u of [0.3, 0.4, 0.5, 0.6, 0.7]) for (const v of [0.3, 0.4, 0.5, 0.6, 0.7]) {
+          const top = [q[0][0] + (q[1][0] - q[0][0]) * u, q[0][1] + (q[1][1] - q[0][1]) * u];
+          const bot = [q[3][0] + (q[2][0] - q[3][0]) * u, q[3][1] + (q[2][1] - q[3][1]) * u];
+          const px = cx.getImageData(Math.round((top[0] + (bot[0] - top[0]) * v) * sc), Math.round((top[1] + (bot[1] - top[1]) * v) * sc), 1, 1).data;
+          r += px[0]; g += px[1]; b += px[2]; n++;
+        }
+        r /= n; g /= n; b /= n;
+        if (c.ink === 'dark') {
+          // 板の色 × 暗い青みのインク。板が明るいほど字も少し明るく、影なら暗く
+          span.style.color = `rgb(${Math.round(r * 0.11 + 4)},${Math.round(g * 0.12 + 6)},${Math.round(b * 0.17 + 12)})`;
+          span.style.opacity = '0.95';
+        } else {
+          span.style.color = `rgb(${Math.round(190 + r * 0.25)},${Math.round(192 + g * 0.25)},${Math.round(186 + b * 0.25)})`;
+        }
+      } catch (e) {}   // file:// など canvas が読めない環境では CSS の既定色のまま
+    };
+    if (img.complete && img.naturalWidth) tint(); else img.addEventListener('load', tint);
+
     // 手書きらしく、わずかな位置のズレ(分ごとに固定)。傾きはカードに合わせるため付けない
     const r1 = ((seed % 97) / 97 - .5), r2 = ((seed % 53) / 53 - .5);
     const fit = () => {
-      let fs = (by1 - by0) * H * 0.95 * font.scale;
+      let fs = (by1 - by0) * H * 1.05 * font.scale;
       span.style.fontSize = fs + 'px';
       const maxW = (bx1 - bx0) * W;
       if (span.offsetWidth > maxW) { fs *= maxW / span.offsetWidth; span.style.fontSize = fs + 'px'; }
@@ -240,6 +295,16 @@
         }
       } catch (e) {}
       span.style.transform = `translate(${dx + r2 * W * 0.01}px, ${dy + r1 * H * 0.01}px)`;
+      chars.forEach((c1) => {
+        const j = c1._j;
+        c1.style.transform = `translateY(${(j.dy * 0.07 + drift * j.i) * fs}px) rotate(${j.rot * 4}deg) scale(${1 + j.sc * 0.1})`;
+        c1.style.marginRight = (j.sp * 0.05) * fs + 'px';
+      });
+      // フィルターの強さは文字サイズ・画像の拡大率に合わせる
+      const f = svg.querySelector('filter');
+      f.querySelector('feDisplacementMap').setAttribute('scale', (fs * 0.03).toFixed(2));
+      f.querySelector('feTurbulence').setAttribute('baseFrequency', (1.8 / fs).toFixed(4));
+      f.querySelector('feGaussianBlur').setAttribute('stdDeviation', (0.3 * k).toFixed(2));
     };
     fit();
     if (document.fonts && document.fonts.load) {
