@@ -159,7 +159,7 @@
   // 時計に使う画像(exclude 指定を除く)。?img=N での直接指定は除外画像も表示できる
   const POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);
   // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
-  const SWITCH_MS = 5000;
+  const SWITCH_MS = 2000;
   // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
   function pickIdx(slot) {
     const i = hash(`slot${slot}`) % POOL.length;
