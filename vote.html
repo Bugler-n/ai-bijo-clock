@@ -50,8 +50,8 @@
 <div id="grid"></div>
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
-<script src="cards.js?v=20261011182327"></script>
-<script src="votes.js?v=20261011182327"></script>
+<script src="cards.js?v=20261011185801"></script>
+<script src="votes.js?v=20261011185801"></script>
 <script>
   const grid = document.getElementById('grid'), lead = document.getElementById('lead'), toast = document.getElementById('toast');
   let toastTimer;
@@ -60,7 +60,7 @@
   function render() {
     const entered = Votes.justEntered(), list = Votes.waiting();
     lead.innerHTML = list.length
-      ? `いいねの多い子が時計に出ます。いま応援を待っているのは${list.length}人。押すといいねが入ります${Votes.TEST_MODE ? '(テスト中: 何度でも押せます)' : '(同じ子には1日1回)'}。<br>上位に入ると、2分間「応援ありがとう」の文字つきで時計に登場します。`
+      ? `いいね集めた子から時計にデビューできるよ〜。いま推し待ちは${list.length}人!推しをタップして応援してね${Votes.TEST_MODE ? '(テスト中: 何度でもOK)' : '(同じ子には1日1回までね)'}。<br>ランクインしたら、お礼メッセージつきで2分間、時計にドーンと登場するよ。`
       : `みんな上位に入っています。`;
     grid.innerHTML = '';
     if (!list.length && !entered.length) { grid.innerHTML = '<div class="empty">応援待ちの子はいません</div>'; return; }
