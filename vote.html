@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あなたの推しは誰？ - AI美女時計</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%88%E3%81%82%E3%81%AA%E3%81%9F%E3%81%AE%E6%8E%A8%E3%81%97%E3%81%AF%E8%AA%B0%EF%BC%9F%E3%80%8C%E3%80%8D0123456789&display=swap" rel="stylesheet">
+<title>みんなで推し活 - AI美女時計</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%88%E3%81%BF%E3%82%93%E3%81%AA%E3%81%A7%E6%8E%A8%E3%81%97%E6%B4%BB%E3%80%8C%E3%80%8D0123456789&display=swap" rel="stylesheet">
 <style>
   :root { --bg: #0e0c12; --fg: #f1eef3; --accent: #ff8fb8; }
   * { box-sizing: border-box; }
@@ -44,14 +44,14 @@
 </head>
 <body>
 <header>
-  <h1>あなたの推しは誰？</h1>
+  <h1>みんなで推し活</h1>
 </header>
 <p class="lead" id="lead"></p>
 <div id="grid"></div>
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
-<script src="cards.js?v=20261011175617"></script>
-<script src="votes.js?v=20261011175617"></script>
+<script src="cards.js?v=20261011182327"></script>
+<script src="votes.js?v=20261011182327"></script>
 <script>
   const grid = document.getElementById('grid'), lead = document.getElementById('lead'), toast = document.getElementById('toast');
   let toastTimer;
@@ -60,7 +60,7 @@
   function render() {
     const entered = Votes.justEntered(), list = Votes.waiting();
     lead.innerHTML = list.length
-      ? `いいねの多い子が時計に出ます。いま応援を待っているのは${list.length}人。押すといいねが入ります${Votes.TEST_MODE ? '(テスト中: 何度でも押せます)' : '(同じ子には1日1回)'}。<br>上位に入ると、5分間「応援ありがとう」の文字つきで時計に登場します。`
+      ? `いいねの多い子が時計に出ます。いま応援を待っているのは${list.length}人。押すといいねが入ります${Votes.TEST_MODE ? '(テスト中: 何度でも押せます)' : '(同じ子には1日1回)'}。<br>上位に入ると、2分間「応援ありがとう」の文字つきで時計に登場します。`
       : `みんな上位に入っています。`;
     grid.innerHTML = '';
     if (!list.length && !entered.length) { grid.innerHTML = '<div class="empty">応援待ちの子はいません</div>'; return; }

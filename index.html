@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%880123456789%E5%B9%B4%E6%9C%88%E6%97%A5%28%29%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F%E3%81%82%E3%81%AA%E3%81%9F%E3%81%AE%E6%8E%A8%E3%81%97%E3%81%AF%E8%AA%B0%EF%BC%9F%CE%B2&display=swap" rel="stylesheet">   <!-- タイトル・年月日用(必要な文字だけ読み込む) -->
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%880123456789%E5%B9%B4%E6%9C%88%E6%97%A5%28%29%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F%E3%81%BF%E3%82%93%E3%81%AA%E3%81%A7%E6%8E%A8%E3%81%97%E6%B4%BB%CE%B2&display=swap" rel="stylesheet">   <!-- タイトル・年月日用(必要な文字だけ読み込む) -->
 <link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Hi+Melody&family=Gloria+Hallelujah&family=Covered+By+Your+Grace&family=Indie+Flower&family=Rock+Salt&family=Nanum+Pen+Script&family=Permanent+Marker&family=Gaegu:wght@700&family=Potta+One&family=Gochi+Hand&family=Mynerve&family=Playpen+Sans:wght@500&family=Sue+Ellen+Francisco&family=Reenie+Beanie&family=Mansalva&family=Swanky+and+Moo+Moo&family=Over+the+Rainbow&family=Dokdo&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -98,12 +98,12 @@
   /* 投票リンク: タイトル(左に美人時計と同じピンクの点)と、その下に説明の2行 */
   #vlink { display: block; color: #f1eef3a0; text-decoration: none; line-height: 1.3; }
   #vlink b { display: block; font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
-             font-size: 14px; font-weight: 300; letter-spacing: .2em; color: var(--fg); }
+             font-size: 16px; font-weight: 300; letter-spacing: .2em; color: var(--fg); }
   #vlink b::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
                      background: var(--accent); margin-right: .9em; vertical-align: .14em; box-shadow: 0 0 7px var(--accent); }
   #vbase { display: inline-block; width: 0; height: 0; vertical-align: baseline; }   /* 文字のベースラインの位置を測る目印 */
-  #vlink small { display: block; padding-left: calc(5px + .9em * 14 / 12); }
-  #vlink small { margin-top: 4px; font-size: 12px; letter-spacing: .1em; color: #f1eef380; }
+  #vlink small { display: block; padding-left: calc(5px + .9em * 16 / 14); }
+  #vlink small { margin-top: 4px; font-size: 14px; letter-spacing: .1em; color: #f1eef380; }
   #vlink:hover b, #vlink:hover small { color: #fff; }
   body.idle { cursor: none; }
 
@@ -133,13 +133,13 @@
 <div id="sec" aria-hidden="true"><i></i></div>
 <div id="likes" role="button" tabindex="0" aria-label="この子にいいね" aria-live="polite"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-8.6C1 9.2 3 5.5 6.6 5.5c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.6 3.7 3.9 6.9C19 16.6 12 21 12 21z"/></svg><span id="likesN">0</span></div>
 <div id="vbar">
-  <a id="vlink" href="vote.html"><b>あなたの推しは誰？</b><small>投票待ちの子はこちら<i id="vbase"></i></small></a>
+  <a id="vlink" href="vote.html"><b>みんなで推し活</b><small>推し待ちAI美女はこちら<i id="vbase"></i></small></a>
 </div>
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261011175617"></script>
-<script src="votes.js?v=20261011175617"></script>
+<script src="cards.js?v=20261011182327"></script>
+<script src="votes.js?v=20261011182327"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -182,7 +182,7 @@
   }
   const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
 
-  // 上位入りした子がボードに小さく書く一言。絵の雰囲気(moodOf)ごとに4つ、計20。上位入りした時刻で1つ決まる(その子の5分間は同じ言葉)
+  // 上位入りした子がボードに小さく書く一言。絵の雰囲気(moodOf)ごとに4つ、計20。上位入りした時刻で1つ決まる(その子の2分間は同じ言葉)
   const BOARD_MSGS = {
     night: ['夜もありがと！', 'きらめく夜に感謝', '夜更かし仲間だいすき', '月まで届いたよ'],
     blue:  ['空まで届いたよ', '青空みたいに感謝！', 'さわやか、ありがと！', '風になって感謝〜'],
@@ -323,7 +323,7 @@
       note.className = 'thanks';
       // 文言は絵の雰囲気が分かる読み込み後に入れる(下の setNote)。thanks はその選び方の種
       note.style.cssText = `position:absolute;left:${bx0 * W}px;width:${(bx1 - bx0) * W}px;text-align:center;` +
-        `top:${by0 * H + (by1 - by0) * H * 0.76}px;line-height:1;` +
+        `top:${by0 * H + (by1 - by0) * H * 0.74}px;line-height:1;` +
         `font-family:"${font.name}","Yomogi","Hiragino Maru Gothic ProN",cursive;font-weight:${font.weight};` +
         `-webkit-text-stroke:${font.stroke * 0.8}em currentColor;paint-order:stroke fill;filter:url(#${fid})`;
       card.appendChild(note);
@@ -394,11 +394,11 @@
       if (thanks) dy -= (by1 - by0) * H * 0.14;                  // 時刻を少し上げて、下に一言ぶんの余白をつくる
       span.style.transform = `translate(${dx + r2 * W * 0.01}px, ${dy + r1 * H * 0.01}px)`;
       if (note) {
-        let nfs = (by1 - by0) * H * 0.15;
+        let nfs = (by1 - by0) * H * 0.21;
         try {
           measureCtx.font = `${font.weight} 100px "${font.name}", "Yomogi"`;
           const w100 = measureCtx.measureText(note.textContent).width;
-          if (w100 > 0) nfs = Math.min(nfs, maxW * 0.62 / (w100 / 100));
+          if (w100 > 0) nfs = Math.min(nfs, maxW * 0.84 / (w100 / 100));
         } catch (e) {}
         note.style.fontSize = nfs + 'px';
       }
@@ -551,7 +551,7 @@
     dateEl.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
     document.title = `${text} AI美女時計`;
     const slot = FIXED_TIME ? 0 : Math.floor(Date.now() / SWITCH_MS);   // ?t= 指定時は絵を固定
-    // 上位に入ったばかりの子がいれば、5分間その子を固定で出して「応援ありがとう」を添える
+    // 上位に入ったばかりの子がいれば、2分間その子を固定で出して「応援ありがとう」を添える
     const pinId = (manualIdx === null && !FIXED_TIME) ? Votes.thanks() : null;
     const pinIdx = pinId ? Votes.indexOf(pinId) : -1;
     const thanksOn = pinIdx >= 0;
