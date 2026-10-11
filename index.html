@@ -7,6 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%880123456789%E5%B9%B4%E6%9C%88%E6%97%A5%28%29%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F&display=swap" rel="stylesheet">   <!-- タイトル・年月日用(必要な文字だけ読み込む) -->
 <link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Hi+Melody&family=Gloria+Hallelujah&family=Covered+By+Your+Grace&family=Indie+Flower&family=Rock+Salt&family=Nanum+Pen+Script&family=Permanent+Marker&family=Gaegu:wght@700&family=Potta+One&family=Gochi+Hand&family=Mynerve&family=Playpen+Sans:wght@500&family=Sue+Ellen+Francisco&family=Reenie+Beanie&family=Mansalva&family=Swanky+and+Moo+Moo&family=Over+the+Rainbow&family=Dokdo&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -50,18 +51,22 @@
            padding: 0 calc(var(--pad) + 4px);
            display: flex; align-items: center; justify-content: space-between; gap: 12px;
            pointer-events: none; text-shadow: 0 1px 8px #000a; }
-  .brand { font-size: 18px; font-weight: 700; letter-spacing: .24em; }
+  .brand { font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; font-size: 18px; font-weight: 300; letter-spacing: .3em; }
   .brand::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
                    background: var(--accent); margin-right: .9em; vertical-align: .12em;
                    box-shadow: 0 0 10px var(--accent); }
   /* 画面の左側・縦中央。絵と重なるほど狭い画面では上(ヘッダー)に戻す(body.compact) */
   .brand-wrap { display: flex; flex-direction: column; gap: 7px;
                 position: fixed; left: calc(var(--pad) + 4px); top: 50%; transform: translateY(-50%); }
-  body:not(.compact) .brand { font-size: 30px; }
-  body:not(.compact) .tagline { font-size: 20px; }
+  body:not(.compact) .brand { font-size: calc(30px * var(--bs, 1)); }
+  body:not(.compact) .tagline { font-size: calc(20px * var(--bs, 1)); }
   body.compact .brand-wrap { position: static; transform: none; gap: 5px; }
   .tagline { font-size: 14px; color: var(--fg-dim); letter-spacing: .14em; padding-left: calc(8px + .9em); }
-  .date { margin-left: auto; font-size: 15px; color: #f1eef380; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+  /* 写真の右上(写真の右端に右揃え、写真の上端のすぐ上)。位置は layout() の placeDate で決める */
+  .date { position: fixed; right: 0; bottom: 0; margin-right: -.08em; /* 字間の余白ぶん右へ寄せ、写真の右端にそろえる */
+          font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; font-weight: 300;
+          font-size: 15px; color: #f1eef380; letter-spacing: .08em; font-variant-numeric: tabular-nums; white-space: nowrap;
+          transition: right 1s ease, bottom 1s ease; }
 
   /* 秒の進み具合(目立たない細いバー) */
   #sec { position: fixed; z-index: 5; left: 0; bottom: 0; height: 3px; width: 100%;
@@ -89,7 +94,7 @@
     :root { --header-h: 58px; }
     .brand { font-size: 15px; letter-spacing: .16em; }
     .tagline { font-size: 12px; letter-spacing: .1em; }
-    .date { font-size: 12px; }
+    .date { font-size: 11px; }
   }
 </style>
 </head>
@@ -97,7 +102,7 @@
 <header>
   <div class="brand-wrap">
     <div class="brand">AI美女時計</div>
-    <div class="tagline">AIが織り成す、美と時の世界へ</div>
+    <div class="tagline">AIがつむぐ美の時間</div>
   </div>
   <div class="date" id="date"></div>
 </header>
@@ -343,20 +348,56 @@
     const top = bare ? 0 : (parseFloat(rs.getPropertyValue('--header-h')) || 66);
     const availW = innerWidth - pad * 2, availH = innerHeight - top - pad;
     const IMAGE_SCALE = (bare || innerWidth < 520) ? 1 : 0.9;   // 絵を表示領域いっぱいではなく一回り小さく見せる
-    const s = Math.min(availW / c.w, availH / c.h) * IMAGE_SCALE;
+    let s = Math.min(availW / c.w, availH / c.h) * IMAGE_SCALE;
     const brand = document.querySelector('.brand-wrap');
+    // タイトルの幅は「左手中央」表示のときの大きさで測る(ヘッダー表示だと文字が小さい)
+    document.body.classList.remove('compact');
+    document.body.style.setProperty('--bs', '1');
+    let brandW = brand.offsetWidth;
     const sideSpace = (innerWidth - c.w * s) / 2;           // 絵の左側に残る幅
-    const compact = bare || sideSpace < brand.offsetWidth + pad * 2 + 8;
+    let compact = true, cx = innerWidth / 2;
+    if (!bare) {
+      if (sideSpace >= brandW + pad * 2 + 8) {
+        // 余裕がある: 絵は中央。タイトルは絵の左側の余白の中央に置く(余白が広い画面ほど右に寄る)
+        compact = false;
+        brand.style.left = Math.max(pad, (sideSpace - brandW) / 2) + 'px';
+      } else {
+        // 窓が狭い: タイトルは左手中央のまま、絵と年月日を右へ寄せる。
+        // タイトルの文字を段階的に小さくしても絵が小さくなりすぎる(元の約6割未満)ときだけ、ヘッダー表示に戻す
+        for (const bs of [1, 0.8, 0.64, 0.52]) {
+          document.body.style.setProperty('--bs', String(bs));
+          brandW = brand.offsetWidth;
+          const regionL = pad + 4 + brandW + Math.max(14, pad);   // タイトルの右端のさらに右
+          const regionW = innerWidth - pad - regionL;
+          const s2 = Math.min(regionW / c.w, availH / c.h) * IMAGE_SCALE;
+          if (regionW > 0 && s2 >= s * 0.6) {
+            compact = false; s = s2; cx = regionL + regionW / 2;
+            brand.style.left = '';   // CSS 既定(左端)
+            break;
+          }
+        }
+        if (compact) document.body.style.setProperty('--bs', '1');
+      }
+    }
     document.body.classList.toggle('compact', compact);
-    // 絵の左側の余白の中央に置く(余白が広い画面ほど右に寄る)
-    brand.style.left = compact ? '' : Math.max(pad, (sideSpace - brand.offsetWidth) / 2) + 'px';
-    scene.style.left = innerWidth / 2 + 'px';
+    if (compact) brand.style.left = '';
+    scene.style.left = cx + 'px';
     scene.style.top = top + availH / 2 + 'px';
     scene.style.width = c.w + 'px';
     scene.style.height = c.h + 'px';
     scene.style.transform = `translate(-50%,-50%) scale(${s})`;
     scene.style.borderRadius = 16 / s + 'px';
     scene.style.boxShadow = `0 ${12 / s}px ${40 / s}px rgba(0,0,0,.55), 0 0 0 ${1 / s}px rgba(255,255,255,.08)`;
+    placeDate(top + availH / 2 - c.h * s / 2, cx + c.w * s / 2);   // 写真の上端・右端
+  }
+
+  // 年月日を写真の右上に置く。最初の1回は動かさず、写真の大きさが変わるときだけゆっくり追従する
+  function placeDate(photoTop, photoRight) {
+    const el = document.getElementById('date');
+    if (!el._placed) { el.style.transition = 'none'; }
+    el.style.right = Math.max(0, innerWidth - photoRight) + 'px';
+    el.style.bottom = Math.max(0, innerHeight - photoTop + 8) + 'px';
+    if (!el._placed) { void el.offsetWidth; el.style.transition = ''; el._placed = true; }
   }
 
   // ---- 表示切替(クロスフェード) ----
