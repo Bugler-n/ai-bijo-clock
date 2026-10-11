@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%880123456789%E5%B9%B4%E6%9C%88%E6%97%A5%28%29%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F&display=swap" rel="stylesheet">   <!-- タイトル・年月日用(必要な文字だけ読み込む) -->
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%880123456789%E5%B9%B4%E6%9C%88%E6%97%A5%28%29%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F%E3%81%82%E3%81%AA%E3%81%9F%E3%81%AE%E6%8E%A8%E3%81%97%E3%81%AF%E8%AA%B0%EF%BC%9F%CE%B2&display=swap" rel="stylesheet">   <!-- タイトル・年月日用(必要な文字だけ読み込む) -->
 <link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Hi+Melody&family=Gloria+Hallelujah&family=Covered+By+Your+Grace&family=Indie+Flower&family=Rock+Salt&family=Nanum+Pen+Script&family=Permanent+Marker&family=Gaegu:wght@700&family=Potta+One&family=Gochi+Hand&family=Mynerve&family=Playpen+Sans:wght@500&family=Sue+Ellen+Francisco&family=Reenie+Beanie&family=Mansalva&family=Swanky+and+Moo+Moo&family=Over+the+Rainbow&family=Dokdo&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -52,6 +52,7 @@
            display: flex; align-items: center; justify-content: space-between; gap: 12px;
            pointer-events: none; text-shadow: 0 1px 8px #000a; }
   .brand { font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; font-size: 18px; font-weight: 300; letter-spacing: .3em; }
+  .brand .beta { font-size: .55em; letter-spacing: 0; margin-left: .35em; vertical-align: baseline; color: var(--accent); }
   .brand::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
                    background: var(--accent); margin-right: .9em; vertical-align: .12em;
                    box-shadow: 0 0 10px var(--accent); }
@@ -82,11 +83,32 @@
         backdrop-filter: blur(6px); transition: opacity .4s ease, background .2s; }
   #fs:hover { background: #000b; }
   #fs svg { width: 18px; height: 18px; }
-  body.idle #fs { opacity: 0; pointer-events: none; }
+  body.idle #fs { opacity: 0; pointer-events: none; }   /* ハートと投票リンクは常時表示 */
+  /* いいねと投票ページへのリンク(左下。どちらも常時表示) */
+  #vbar { position: fixed; z-index: 5; left: calc(var(--pad) + 4px); bottom: calc(var(--pad) - 2px);
+          display: flex; align-items: flex-end; gap: 10px; transition: opacity .4s ease; }
+  /* 写真の下(左端そろえ)に、いまの子のいいね数(常時表示)。位置は layout() の placeLikes で決める */
+  #likes { position: fixed; z-index: 4; left: 0; top: 0; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+           color: #f1eef3d0; font-size: 15px; letter-spacing: .05em; transition: left 1s, top 1s; }
+  #likes:hover { color: #fff; }
+  #likes.pop svg { animation: pop .35s ease; }
+  @keyframes pop { 40% { transform: scale(1.35); } }
+  #likes svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  .bare #likes { display: none; }
+  /* 投票リンク: タイトル(左に美人時計と同じピンクの点)と、その下に説明の2行 */
+  #vlink { display: block; color: #f1eef3a0; text-decoration: none; line-height: 1.3; }
+  #vlink b { display: block; font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+             font-size: 14px; font-weight: 300; letter-spacing: .2em; color: var(--fg); }
+  #vlink b::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+                     background: var(--accent); margin-right: .9em; vertical-align: .14em; box-shadow: 0 0 7px var(--accent); }
+  #vbase { display: inline-block; width: 0; height: 0; vertical-align: baseline; }   /* 文字のベースラインの位置を測る目印 */
+  #vlink small { display: block; padding-left: calc(5px + .9em * 14 / 12); }
+  #vlink small { margin-top: 4px; font-size: 12px; letter-spacing: .1em; color: #f1eef380; }
+  #vlink:hover b, #vlink:hover small { color: #fff; }
   body.idle { cursor: none; }
 
   /* gallery.html の埋め込み用: ヘッダー・ボタン・余白なし */
-  .bare header, .bare #fs { display: none; }
+  .bare header, .bare #fs, .bare #vbar { display: none; }
   .bare { --header-h: 0px; }
   .bare .scene { border-radius: 0 !important; box-shadow: none !important; }
 
@@ -101,7 +123,7 @@
 <body>
 <header>
   <div class="brand-wrap">
-    <div class="brand">AI美女時計</div>
+    <div class="brand">AI美女時計<span class="beta">β</span></div>
     <div class="tagline">AIがつむぐ美の時間</div>
   </div>
   <div class="date" id="date"></div>
@@ -109,10 +131,15 @@
 <div id="screen"></div>
 <noscript><p style="position:fixed;top:45%;width:100%;text-align:center">JavaScript を有効にしてください</p></noscript>
 <div id="sec" aria-hidden="true"><i></i></div>
+<div id="likes" role="button" tabindex="0" aria-label="この子にいいね" aria-live="polite"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-8.6C1 9.2 3 5.5 6.6 5.5c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.6 3.7 3.9 6.9C19 16.6 12 21 12 21z"/></svg><span id="likesN">0</span></div>
+<div id="vbar">
+  <a id="vlink" href="vote.html"><b>あなたの推しは誰？</b><small>投票待ちの子はこちら<i id="vbase"></i></small></a>
+</div>
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
 <script src="cards.js"></script>
+<script src="votes.js"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -155,6 +182,31 @@
   }
   const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
 
+  // 上位入りした子がボードに小さく書く一言。絵の雰囲気(moodOf)ごとに4つ、計20。上位入りした時刻で1つ決まる(その子の5分間は同じ言葉)
+  const BOARD_MSGS = {
+    night: ['夜もありがと！', 'きらめく夜に感謝', '夜更かし仲間だいすき', '月まで届いたよ'],
+    blue:  ['空まで届いたよ', '青空みたいに感謝！', 'さわやか、ありがと！', '風になって感謝〜'],
+    warm:  ['ぽかぽかありがと', 'あったか感謝〜', '夕焼け色にありがと', 'やさしさ染みた〜'],
+    chalk: ['黒板いっぱい感謝！', '100点、ありがと！', '先生に内緒でうれしい', 'チョークで感謝〜'],
+    plain: ['今日いちばん感謝！', 'ありがと、うれしい！', 'みんな大好きっ！', '最高の笑顔でありがと'],
+  };
+  // 絵全体の平均色から雰囲気を決める(黒板は ink で判定)
+  function moodOf(img, c) {
+    if (c.ink === 'chalk') return 'chalk';
+    try {
+      const cv = document.createElement('canvas'); cv.width = 48; cv.height = Math.max(1, Math.round(48 * c.h / c.w));
+      const cx = cv.getContext('2d', { willReadFrequently: true });
+      cx.drawImage(img, 0, 0, cv.width, cv.height);
+      const d = cx.getImageData(0, 0, cv.width, cv.height).data;
+      let r = 0, g = 0, b = 0, n = d.length / 4;
+      for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+      r /= n; g /= n; b /= n;
+      if ((r + g + b) / 3 < 85) return 'night';
+      if (b > r + 12 && b >= g) return 'blue';
+      if (r > b + 30) return 'warm';
+    } catch (e) {}
+    return 'plain';
+  }
   // ---- 時刻 → 画像(同じ分なら同じ絵。前の分とは必ず別の絵) ----
   function hash(s) {
     let h = 2166136261;
@@ -162,7 +214,13 @@
     return h >>> 0;
   }
   // 時計に使う画像(exclude 指定を除く)。?img=N での直接指定は除外画像も表示できる
-  const POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);
+  // 上位 Votes.TOP_N 人だけが対象(票の少ない子は vote.html で応援を待つ)
+  let POOL = [];
+  function refreshPool() {
+    POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude && Votes.isTop(CARDS[i].id));
+    if (!POOL.length) POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);
+  }
+  refreshPool();
   // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
   const SWITCH_MS = 15000;
   // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
@@ -199,7 +257,7 @@
   let filterSeq = 0;
 
   // ---- シーン生成 ----
-  function buildScene(idx, text, seed) {
+  function buildScene(idx, text, seed, thanks) {
     const c = CARDS[idx];
     const scene = document.createElement('div');
     scene.className = 'scene';
@@ -258,6 +316,18 @@
     span.style.webkitTextStroke = `${font.stroke}em currentColor`;
     span.style.paintOrder = 'stroke fill';
     card.appendChild(span);
+    // 上位入りの直後は、時刻の下に「応援ありがとう」を小さく書く
+    let note = null;
+    if (thanks) {
+      note = document.createElement('span');
+      note.className = 'thanks';
+      // 文言は絵の雰囲気が分かる読み込み後に入れる(下の setNote)。thanks はその選び方の種
+      note.style.cssText = `position:absolute;left:${bx0 * W}px;width:${(bx1 - bx0) * W}px;text-align:center;` +
+        `top:${by0 * H + (by1 - by0) * H * 0.76}px;line-height:1;` +
+        `font-family:"${font.name}","Yomogi","Hiragino Maru Gothic ProN",cursive;font-weight:${font.weight};` +
+        `-webkit-text-stroke:${font.stroke * 0.8}em currentColor;paint-order:stroke fill;filter:url(#${fid})`;
+      card.appendChild(note);
+    }
     scene.appendChild(card);
 
     // ボード中央付近の色を測り、インクをそれに馴染む色にする(影になっていれば暗く、暖色光なら暖かく)
@@ -279,8 +349,10 @@
           // 板の色 × 暗い青みのインク。板が明るいほど字も少し明るく、影なら暗く
           span.style.color = `rgb(${Math.round(r * 0.11 + 4)},${Math.round(g * 0.12 + 6)},${Math.round(b * 0.17 + 12)})`;
           span.style.opacity = '0.95';
+          if (note) { note.style.color = span.style.color; note.style.opacity = '0.95'; }
         } else {
           span.style.color = `rgb(${Math.round(190 + r * 0.25)},${Math.round(192 + g * 0.25)},${Math.round(186 + b * 0.25)})`;
+          if (note) note.style.color = span.style.color;
         }
       } catch (e) {}   // file:// など canvas が読めない環境では CSS の既定色のまま
     };
@@ -290,7 +362,7 @@
     const r1 = ((seed % 97) / 97 - .5), r2 = ((seed % 53) / 53 - .5);
     const fit = () => {
       // フォントごとに字の幅・高さが違うので、100px で実測して「高さは枠の約74%、幅は枠の96%まで」で収まる最大サイズに自動調整する
-      const boxH = (by1 - by0) * H, maxW = (bx1 - bx0) * W;
+      const boxH = (by1 - by0) * H * (thanks ? 0.72 : 1), maxW = (bx1 - bx0) * W;
       let fs = boxH * 1.05 * font.scale;                          // 実測できないときの目安(フォント未読込など)
       chars.forEach((c1) => { c1.style.marginRight = '0'; });
       span.style.fontSize = '100px';
@@ -319,7 +391,17 @@
           dx = (span.offsetWidth - spacing) / 2 - inkCenterX;
         }
       } catch (e) {}
+      if (thanks) dy -= (by1 - by0) * H * 0.14;                  // 時刻を少し上げて、下に一言ぶんの余白をつくる
       span.style.transform = `translate(${dx + r2 * W * 0.01}px, ${dy + r1 * H * 0.01}px)`;
+      if (note) {
+        let nfs = (by1 - by0) * H * 0.15;
+        try {
+          measureCtx.font = `${font.weight} 100px "${font.name}", "Yomogi"`;
+          const w100 = measureCtx.measureText(note.textContent).width;
+          if (w100 > 0) nfs = Math.min(nfs, maxW * 0.62 / (w100 / 100));
+        } catch (e) {}
+        note.style.fontSize = nfs + 'px';
+      }
       chars.forEach((c1) => {
         const j = c1._j;
         c1.style.transform = `translateY(${(j.dy * 0.07 + drift * j.i) * fs}px) rotate(${j.rot * 4}deg) scale(${1 + j.sc * 0.1})`;
@@ -332,6 +414,14 @@
       f.querySelector('feGaussianBlur').setAttribute('stdDeviation', (0.3 * k).toFixed(2));
     };
     fit();
+    if (note) {
+      const setNote = () => {
+        const list = BOARD_MSGS[moodOf(img, c)];
+        note.textContent = list[+thanks % list.length];
+        fit();
+      };
+      if (img.complete && img.naturalWidth) setNote(); else img.addEventListener('load', setNote);
+    }
     if (document.fonts && document.fonts.load) {
       document.fonts.load(`${font.weight} 100px "${font.name}"`, text).then(fit, () => {});
     }
@@ -346,7 +436,7 @@
     const bare = document.documentElement.classList.contains('bare');
     const pad = bare ? 0 : Math.min(32, Math.max(12, Math.min(innerWidth, innerHeight) * 0.03));
     const top = bare ? 0 : (parseFloat(rs.getPropertyValue('--header-h')) || 66);
-    const availW = innerWidth - pad * 2, availH = innerHeight - top - pad;
+    const availW = innerWidth - pad * 2, availH = innerHeight - top - pad - (bare ? 0 : 28);   // 28 = 写真の下のいいね数ぶん
     const IMAGE_SCALE = (bare || innerWidth < 520) ? 1 : 0.9;   // 絵を表示領域いっぱいではなく一回り小さく見せる
     let s = Math.min(availW / c.w, availH / c.h) * IMAGE_SCALE;
     const brand = document.querySelector('.brand-wrap');
@@ -389,6 +479,14 @@
     scene.style.borderRadius = 16 / s + 'px';
     scene.style.boxShadow = `0 ${12 / s}px ${40 / s}px rgba(0,0,0,.55), 0 0 0 ${1 / s}px rgba(255,255,255,.08)`;
     placeDate(top + availH / 2 - c.h * s / 2, cx + c.w * s / 2);   // 写真の上端・右端
+    // 投票リンクはタイトル(美人時計)の左端より少し右から始める
+    const vbar = document.getElementById('vbar');
+    vbar.style.left = (brand.getBoundingClientRect().left + 44) + 'px';
+    // 投票リンクの最後の行のベースラインを、写真の下辺に合わせる
+    vbar.style.bottom = '0px';
+    const baseY = document.getElementById('vbase').getBoundingClientRect().bottom;   // bottom:0 のときのベースライン位置
+    vbar.style.bottom = (baseY - (top + availH / 2 + c.h * s / 2)) + 'px';
+    placeLikes(cx - c.w * s / 2, top + availH / 2 + c.h * s / 2);  // 写真の左端・下端(すぐ下に置く)
   }
 
   // 年月日を写真の右上に置く。最初の1回は動かさず、写真の大きさが変わるときだけゆっくり追従する
@@ -400,10 +498,19 @@
     if (!el._placed) { void el.offsetWidth; el.style.transition = ''; el._placed = true; }
   }
 
+  // いいね数を写真の左下(写真の内側)に置く。最初の1回は動かさず、写真の大きさが変わるときだけゆっくり追従する
+  function placeLikes(photoLeft, photoBottom) {
+    const el = document.getElementById('likes');
+    if (!el._placed) el.style.transition = 'none';
+    el.style.left = (photoLeft + 2) + 'px';
+    el.style.top = (photoBottom + 6) + 'px';
+    if (!el._placed) { void el.offsetWidth; el.style.transition = ''; el._placed = true; }
+  }
+
   // ---- 表示切替(クロスフェード) ----
   let current = null, currentIdx = -1;
-  function show(idx, text, seed) {
-    const scene = buildScene(idx, text, seed);
+  function show(idx, text, seed, thanks) {
+    const scene = buildScene(idx, text, seed, thanks);
     const layer = document.createElement('div');
     layer.className = 'layer';
     const bg = document.createElement('div');
@@ -416,6 +523,7 @@
     const go = () => {
       const old = current;
       current = layer; currentIdx = idx;
+      if (typeof syncLike === 'function') syncLike();
       setTimeout(() => {   // rAF はバックグラウンドタブで止まるので setTimeout を使う
         layer.classList.add('show');
         if (old) { old.classList.remove('show'); setTimeout(() => old.remove(), 2100); }
@@ -436,16 +544,23 @@
 
   const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
   const dateEl = document.getElementById('date');
-  let lastText = '', lastSlot = null;
+  let lastText = '', lastSlot = null, lastThanks = false;
   function tick() {
+    refreshPool();
     const { d, text, seed } = nowParts();
     dateEl.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
     document.title = `${text} AI美女時計`;
     const slot = FIXED_TIME ? 0 : Math.floor(Date.now() / SWITCH_MS);   // ?t= 指定時は絵を固定
-    if (text !== lastText || slot !== lastSlot || manualIdx !== null) {
-      const idx = manualIdx !== null ? manualIdx : pickIdx(slot);
-      if (text !== lastText || slot !== lastSlot || idx !== currentIdx) show(idx, text, seed);
-      lastText = text; lastSlot = slot;
+    // 上位に入ったばかりの子がいれば、5分間その子を固定で出して「応援ありがとう」を添える
+    const pinId = (manualIdx === null && !FIXED_TIME) ? Votes.thanks() : null;
+    const pinIdx = pinId ? Votes.indexOf(pinId) : -1;
+    const thanksOn = pinIdx >= 0;
+    const thanks = thanksOn ? String(hash(`${pinId}${Votes.enteredAt(pinId)}`)) : '';
+    const slotChanged = !thanksOn && slot !== lastSlot;   // 固定中は絵を替えない
+    if (text !== lastText || slotChanged || manualIdx !== null || thanksOn !== lastThanks) {
+      const idx = manualIdx !== null ? manualIdx : thanksOn ? pinIdx : pickIdx(slot);
+      if (text !== lastText || slotChanged || idx !== currentIdx || thanksOn !== lastThanks) show(idx, text, seed, thanks);
+      lastText = text; lastSlot = slot; lastThanks = thanksOn;
       preloadNext(slot);
     }
   }
@@ -503,6 +618,23 @@
   }
   updateSec();
   setInterval(updateSec, 250);
+
+  // 写真の下のいいね数を、表示中の子の票数に合わせる(票の増減は他の画面で起きるので定期的に読み直す)
+  function syncLike() {
+    const c = CARDS[currentIdx];
+    if (c) document.getElementById('likesN').textContent = Votes.count(c.id);
+  }
+  setInterval(syncLike, 1000);
+  // 写真の下のハートを押すと、表示中の子のいいねが +1 される
+  const likesEl = document.getElementById('likes');
+  function giveLike() {
+    const c = CARDS[currentIdx];
+    if (!c || !Votes.vote(c.id).ok) return;
+    syncLike(); tick();
+    likesEl.classList.remove('pop'); void likesEl.offsetWidth; likesEl.classList.add('pop');
+  }
+  likesEl.addEventListener('click', giveLike);
+  likesEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); giveLike(); } });
 
   tick();
   if (!FIXED_TIME) schedule();
