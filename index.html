@@ -138,8 +138,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261011185801"></script>
-<script src="votes.js?v=20261011185801"></script>
+<script src="cards.js?v=20261012001454"></script>
+<script src="votes.js?v=20261012001454"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -247,7 +247,7 @@
   }
   refreshPool();
   // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
-  const SWITCH_MS = 15000;
+  const SWITCH_MS = Votes.SWITCH_MS;   // テストモードは10秒、本番は15秒(votes.js で決める)
   // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
   function pickIdx(slot) {
     const i = hash(`slot${slot}`) % POOL.length;
