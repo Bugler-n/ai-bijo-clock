@@ -9,12 +9,15 @@ const Votes = (() => {
   const BASE_TOP = TEST_MODE ? 250 : 300;   // 時計に出る人数のはじめの値(テスト中は 250 にして、応援待ちを増やす)
   const MIN_OUT = 20;                       // 圏外(応援待ち)に最低これだけ残す
   const MAX_WAIT = 3;                // 表示を待てる人数(いま出している子は含まない)
+  // 古い cards.js(id なし)がブラウザに残っていても全員が同じ票にならないよう、id がなければ画像のパスを id にする
+  CARDS.forEach((c) => { if (!c.id) c.id = c.src; });
   const pool = CARDS.filter(c => !c.exclude);
 
   const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   const empty = () => ({ n: {}, at: {}, mine: {}, entered: {}, ins: 0, seeded: false });   // n=票数 at=最後に票が増えた時刻 mine=自分が最後に入れた日 entered=上位入りした時刻
   let data = empty();
   try { data = Object.assign(empty(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+  if (data.n['undefined'] !== undefined) data = empty();   // id が無かった時期に溜まった壊れた票は捨てて、割り当てからやり直す
   const save = () => {
     const old = Date.now() - 60 * 60 * 1000;   // 1時間より前の上位入りは、もう順番に影響しないので捨てる
     Object.keys(data.entered).forEach(id => { if (data.entered[id] < old) delete data.entered[id]; });
