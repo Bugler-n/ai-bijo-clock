@@ -138,8 +138,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261012140926"></script>
-<script src="votes.js?v=20261012140926"></script>
+<script src="cards.js?v=20261012210915"></script>
+<script src="votes.js?v=20261012210915"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -348,7 +348,7 @@
       note = document.createElement('span');
       note.className = 'thanks';
       // 文言は絵の雰囲気が分かる読み込み後に入れる(下の setNote)。thanks はその選び方の種
-      note.style.cssText = `position:absolute;left:${bx0 * W}px;width:${(bx1 - bx0) * W}px;text-align:center;` +
+      note.style.cssText = `position:absolute;left:${(bx0 + (c.msgdx || 0) * (bx1 - bx0)) * W}px;width:${(bx1 - bx0) * W}px;text-align:center;` +
         `top:${by0 * H + (by1 - by0) * H * 0.65}px;line-height:1;` +
         `font-family:"${font.name}","Yomogi","Hiragino Maru Gothic ProN",cursive;font-weight:${font.weight};` +
         `-webkit-text-stroke:${font.stroke * 0.8}em currentColor;paint-order:stroke fill;filter:url(#${fid})`;
