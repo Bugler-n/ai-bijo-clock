@@ -138,14 +138,15 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261012111221"></script>
-<script src="votes.js?v=20261012111221"></script>
+<script src="cards.js?v=20261012140926"></script>
+<script src="votes.js?v=20261012140926"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
   if (new URLSearchParams(location.search).has('bare')) document.documentElement.classList.add('bare');
   const params = new URLSearchParams(location.search);
   const FIXED_TIME = /^\d{1,2}:\d{2}$/.test(params.get('t') || '') ? params.get('t') : null; // ?t=12:34
+  const SHOW_MSG = params.has('msg');   // ?msg=1 : ランクイン時のお礼メッセージを常に表示(確認用)
   let manualIdx = params.has('img') ? (+params.get('img') % CARDS.length + CARDS.length) % CARDS.length : null; // ?img=5
 
   // ---- ホモグラフィ: 単位矩形 (0,0)(W,0)(W,H)(0,H) → 四隅 q ----
@@ -247,7 +248,7 @@
   }
   refreshPool();
   // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
-  const SWITCH_MS = Votes.SWITCH_MS;   // テストモードは10秒、本番は15秒(votes.js で決める)
+  const SWITCH_MS = Votes.SWITCH_MS;   // テストモードは6秒、本番は15秒(votes.js で決める)
   // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
   function pickIdx(slot) {
     const i = hash(`slot${slot}`) % POOL.length;
@@ -348,7 +349,7 @@
       note.className = 'thanks';
       // 文言は絵の雰囲気が分かる読み込み後に入れる(下の setNote)。thanks はその選び方の種
       note.style.cssText = `position:absolute;left:${bx0 * W}px;width:${(bx1 - bx0) * W}px;text-align:center;` +
-        `top:${by0 * H + (by1 - by0) * H * 0.74}px;line-height:1;` +
+        `top:${by0 * H + (by1 - by0) * H * 0.65}px;line-height:1;` +
         `font-family:"${font.name}","Yomogi","Hiragino Maru Gothic ProN",cursive;font-weight:${font.weight};` +
         `-webkit-text-stroke:${font.stroke * 0.8}em currentColor;paint-order:stroke fill;filter:url(#${fid})`;
       card.appendChild(note);
@@ -387,7 +388,7 @@
     const r1 = ((seed % 97) / 97 - .5), r2 = ((seed % 53) / 53 - .5);
     const fit = () => {
       // フォントごとに字の幅・高さが違うので、100px で実測して「高さは枠の約74%、幅は枠の96%まで」で収まる最大サイズに自動調整する
-      const boxH = (by1 - by0) * H * (thanks ? 0.72 : 1), maxW = (bx1 - bx0) * W;
+      const boxH = (by1 - by0) * H * (thanks ? 0.66 : 1), maxW = (bx1 - bx0) * W;
       let fs = boxH * 1.05 * font.scale;                          // 実測できないときの目安(フォント未読込など)
       chars.forEach((c1) => { c1.style.marginRight = '0'; });
       span.style.fontSize = '100px';
@@ -416,14 +417,14 @@
           dx = (span.offsetWidth - spacing) / 2 - inkCenterX;
         }
       } catch (e) {}
-      if (thanks) dy -= (by1 - by0) * H * 0.14;                  // 時刻を少し上げて、下に一言ぶんの余白をつくる
+      if (thanks) dy -= (by1 - by0) * H * 0.17;                  // 時刻を少し上げて、下に一言ぶんの余白をつくる
       span.style.transform = `translate(${dx + r2 * W * 0.01}px, ${dy + r1 * H * 0.01}px)`;
       if (note) {
-        let nfs = (by1 - by0) * H * 0.21;
+        let nfs = (by1 - by0) * H * 0.33;
         try {
           measureCtx.font = `${font.weight} 100px "${font.name}", "Yomogi"`;
           const w100 = measureCtx.measureText(note.textContent).width;
-          if (w100 > 0) nfs = Math.min(nfs, maxW * 0.84 / (w100 / 100));
+          if (w100 > 0) nfs = Math.min(nfs, maxW * 0.94 / (w100 / 100));
         } catch (e) {}
         note.style.fontSize = nfs + 'px';
       }
@@ -441,8 +442,9 @@
     fit();
     if (note) {
       const setNote = () => {
+        // images.csv のランクインメッセージ(c.msg)を優先。無い画像だけ雰囲気別の定型文
         const list = BOARD_MSGS[moodOf(img, c)];
-        note.textContent = list[+thanks % list.length];
+        note.textContent = c.msg || list[+thanks % list.length];
         fit();
       };
       if (img.complete && img.naturalWidth) setNote(); else img.addEventListener('load', setNote);
@@ -583,7 +585,7 @@
     const pinId = (manualIdx === null && !FIXED_TIME) ? Votes.thanks() : null;
     const pinIdx = pinId ? Votes.indexOf(pinId) : -1;
     const thanksOn = pinIdx >= 0;
-    const thanks = thanksOn ? String(hash(`${pinId}${Votes.enteredAt(pinId)}`)) : '';
+    const thanks = thanksOn ? String(hash(`${pinId}${Votes.enteredAt(pinId)}`)) : (SHOW_MSG ? '1' : '');
     const slotChanged = !thanksOn && slot !== lastSlot;   // 固定中は絵を替えない
     if (text !== lastText || slotChanged || manualIdx !== null || thanksOn !== lastThanks) {
       const idx = manualIdx !== null ? manualIdx : thanksOn ? pinIdx : pickIdx(slot);
