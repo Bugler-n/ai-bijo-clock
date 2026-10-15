@@ -2,7 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AI美女時計</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +23,7 @@
     --pad: clamp(12px, 3vmin, 32px);
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
                font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
   #screen { position: fixed; top: 0; right: 0; bottom: 0; left: 0; }
@@ -112,6 +117,11 @@
   .bare { --header-h: 0px; }
   .bare .scene { border-radius: 0 !important; box-shadow: none !important; }
 
+  /* タッチ端末: いいねを押しやすく(見た目はそのまま、押せる範囲だけ広げる) */
+  @media (pointer: coarse) {
+    #likes { padding: 12px 16px 12px 6px; margin: -12px 0 0 -6px; font-size: 16px; }
+    #vlink { padding: 6px 10px 6px 0; }
+  }
   @media (max-width: 520px) {
     :root { --header-h: 58px; }
     .brand { font-size: 15px; letter-spacing: .16em; }
@@ -138,8 +148,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261015020846"></script>
-<script src="votes.js?v=20261015020846"></script>
+<script src="cards.js?v=20261015192654"></script>
+<script src="votes.js?v=20261015192654"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -462,10 +472,15 @@
     const rs = getComputedStyle(document.documentElement);
     const bare = document.documentElement.classList.contains('bare');
     const pad = bare ? 0 : Math.min(32, Math.max(12, Math.min(innerWidth, innerHeight) * 0.03));
-    const top = bare ? 0 : (parseFloat(rs.getPropertyValue('--header-h')) || 66);
-    const availW = innerWidth - pad * 2, availH = innerHeight - top - pad - (bare ? 0 : 28);   // 28 = 写真の下のいいね数ぶん
-    const IMAGE_SCALE = (bare || innerWidth < 520) ? 1 : 0.9;   // 絵を表示領域いっぱいではなく一回り小さく見せる
+    const portrait = !bare && innerHeight > innerWidth;                    // 縦向き(iPhone/iPad など)
+    const short = !bare && !portrait && innerHeight < 560;                 // 横向きで高さがない(iPhone 横持ちなど)
+    // 横向きで高さがない画面は、ヘッダー分の高さを写真に回す(タイトルは左手に出るので、年月日の行だけ空ける)
+    const top = bare ? 0 : short ? 26 : (parseFloat(rs.getPropertyValue('--header-h')) || 66);
+    const availW = innerWidth - pad * 2, availH0 = innerHeight - top - pad - (bare ? 0 : 28);   // 28 = 写真の下のいいね数ぶん
+    let availH = availH0;
+    const IMAGE_SCALE = (bare || short || innerWidth < 520) ? 1 : 0.9;   // 絵を表示領域いっぱいではなく一回り小さく見せる
     let s = Math.min(availW / c.w, availH / c.h) * IMAGE_SCALE;
+    const vbarEl = document.getElementById('vbar');
     const brand = document.querySelector('.brand-wrap');
     // タイトルの幅は「左手中央」表示のときの大きさで測る(ヘッダー表示だと文字が小さい)
     document.body.classList.remove('compact');
@@ -473,7 +488,7 @@
     let brandW = brand.offsetWidth;
     const sideSpace = (innerWidth - c.w * s) / 2;           // 絵の左側に残る幅
     let compact = true, cx = innerWidth / 2;
-    if (!bare) {
+    if (!bare && !portrait) {   // 縦向きは、タイトルを上・写真を画面幅いっぱいにする(左右に並べると写真が小さくなる)
       if (sideSpace >= brandW + pad * 2 + 8) {
         // 余裕がある: 絵は中央。タイトルは絵の左側の余白の中央に置く(余白が広い画面ほど右に寄る)
         compact = false;
@@ -498,6 +513,11 @@
     }
     document.body.classList.toggle('compact', compact);
     if (compact) brand.style.left = '';
+    if (compact && !bare) {   // ヘッダー表示のときは、写真の下に投票リンクの行を空ける
+      availH = availH0 - vbarEl.offsetHeight - 14;
+      s = Math.min(availW / c.w, availH / c.h) * IMAGE_SCALE;
+      cx = innerWidth / 2;
+    }
     scene.style.left = cx + 'px';
     scene.style.top = top + availH / 2 + 'px';
     scene.style.width = c.w + 'px';
@@ -507,7 +527,7 @@
     scene.style.boxShadow = `0 ${12 / s}px ${40 / s}px rgba(0,0,0,.55), 0 0 0 ${1 / s}px rgba(255,255,255,.08)`;
     placeDate(top + availH / 2 - c.h * s / 2, cx + c.w * s / 2);   // 写真の上端・右端
     // 投票リンクはタイトル(美人時計)の左端より少し右から始める
-    const vbar = document.getElementById('vbar');
+    const vbar = vbarEl;
     // タイトルの左端から 64px 右。写真に重なりそうなときは、写真の手前で止める(ただしタイトルの左端よりは右)
     const bl = brand.getBoundingClientRect().left;
     vbar.style.left = '0px';
@@ -516,6 +536,10 @@
     vbar.style.bottom = '0px';
     const baseY = document.getElementById('vbase').getBoundingClientRect().bottom;   // bottom:0 のときのベースライン位置
     vbar.style.bottom = (baseY - (top + availH / 2 + c.h * s / 2)) + 'px';
+    if (compact && !bare) {   // 写真の左端にそろえ、いいね数の行のすぐ下に置く
+      vbar.style.left = Math.max(pad, cx - c.w * s / 2) + 'px';
+      vbar.style.bottom = Math.max(pad - 2, innerHeight - (top + availH / 2 + c.h * s / 2 + 34) - vbar.offsetHeight) + 'px';
+    }
     placeLikes(cx - c.w * s / 2, top + availH / 2 + c.h * s / 2);  // 写真の左端・下端(すぐ下に置く)
   }
 
@@ -613,7 +637,11 @@
     }
   }
 
-  addEventListener('resize', () => { if (current) layout(current, currentIdx); });
+  const relayout = () => { if (current) layout(current, currentIdx); };
+  addEventListener('resize', relayout);
+  // iPhone/iPad: 回転直後は寸法が遅れて確定する。アドレスバーの出入りは visualViewport で拾う
+  addEventListener('orientationchange', () => { setTimeout(relayout, 150); setTimeout(relayout, 500); });
+  if (window.visualViewport) visualViewport.addEventListener('resize', relayout);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   // 確認用: ← → で画像を順に切り替え
   addEventListener('keydown', (e) => {
@@ -629,6 +657,7 @@
     else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
   };
   document.getElementById('fs').addEventListener('click', toggleFs);
+  if (!document.documentElement.requestFullscreen) document.getElementById('fs').style.display = 'none';   // iPhone は全画面APIなし
   addEventListener('dblclick', toggleFs);
   let idleTimer;
   const wake = () => {
