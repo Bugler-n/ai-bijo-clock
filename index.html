@@ -148,8 +148,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261015215401"></script>
-<script src="votes.js?v=20261015215401"></script>
+<script src="cards.js?v=20261016210636"></script>
+<script src="votes.js?v=20261016210636"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -567,6 +567,7 @@
     const scene = buildScene(idx, text, seed, thanks);
     const layer = document.createElement('div');
     layer.className = 'layer';
+    layer._idx = idx;
     const bg = document.createElement('div');
     bg.className = 'bg';
     bg.style.backgroundImage = `url("${encodeURI(CARDS[idx].src)}")`;
@@ -637,7 +638,26 @@
     }
   }
 
-  const relayout = () => { if (current) layout(current, currentIdx); };
+  // 窓の最大化/リサイズ直後に、文字(SVGフィルター+3D変換)だけ古い描画のまま残って位置がずれることがある。
+  // 配置の計算は正しいので、文字レイヤーを一度外して付け直し、再描画させる
+  const repaintInk = () => {
+    if (!current) return;
+    current.querySelectorAll('.card').forEach((card) => {
+      const t = card.style.transform;
+      card.style.transform = 'none';
+      card.querySelectorAll(':scope > span').forEach((s) => { const f = s.style.filter; s.style.filter = 'none'; void s.offsetWidth; s.style.filter = f; });
+      void card.offsetWidth;
+      card.style.transform = t;
+    });
+  };
+  let repaintTimer = 0;
+  const relayout = () => {
+    // フェード中は消えゆく古い絵も新しい大きさに合わせる(共有の年月日・いいね等は最後に現在の絵で上書きされる)
+    screen.querySelectorAll('.layer').forEach((l) => { if (l !== current && l._idx !== undefined) layout(l, l._idx); });
+    if (current) layout(current, currentIdx);
+    clearTimeout(repaintTimer);   // 大きさが落ち着いてから(最大化のアニメーション中は何度も呼ばれる)
+    repaintTimer = setTimeout(() => { repaintInk(); setTimeout(repaintInk, 400); }, 120);
+  };
   addEventListener('resize', relayout);
   // iPhone/iPad: 回転直後は寸法が遅れて確定する。アドレスバーの出入りは visualViewport で拾う
   addEventListener('orientationchange', () => { setTimeout(relayout, 150); setTimeout(relayout, 500); });
