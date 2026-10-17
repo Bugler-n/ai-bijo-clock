@@ -148,8 +148,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261017212640"></script>
-<script src="votes.js?v=20261017212640"></script>
+<script src="cards.js?v=20261017231844"></script>
+<script src="votes.js?v=20261017231844"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -648,6 +648,9 @@
       card.querySelectorAll(':scope > span').forEach((s) => { const f = s.style.filter; s.style.filter = 'none'; void s.offsetWidth; s.style.filter = f; });
       void card.offsetWidth;
       card.style.transform = t;
+      // それでも古い描画が残る場合に備え、カードを一度外して付け直す(合成レイヤーを作り直させる)
+      const parent = card.parentNode, next = card.nextSibling;
+      if (parent) { parent.removeChild(card); void parent.offsetWidth; parent.insertBefore(card, next); }
     });
   };
   let repaintTimer = 0;
@@ -656,13 +659,14 @@
     screen.querySelectorAll('.layer').forEach((l) => { if (l !== current && l._idx !== undefined) layout(l, l._idx); });
     if (current) layout(current, currentIdx);
     clearTimeout(repaintTimer);   // 大きさが落ち着いてから(最大化のアニメーション中は何度も呼ばれる)
-    repaintTimer = setTimeout(() => { repaintInk(); setTimeout(repaintInk, 400); }, 120);
+    repaintTimer = setTimeout(() => { repaintInk(); setTimeout(repaintInk, 400); setTimeout(repaintInk, 1500); }, 120);
   };
   addEventListener('resize', relayout);
   // iPhone/iPad: 回転直後は寸法が遅れて確定する。アドレスバーの出入りは visualViewport で拾う
   addEventListener('orientationchange', () => { setTimeout(relayout, 150); setTimeout(relayout, 500); });
   if (window.visualViewport) visualViewport.addEventListener('resize', relayout);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  addEventListener('focus', () => { clearTimeout(repaintTimer); repaintTimer = setTimeout(repaintInk, 200); });   // 別アプリから戻った直後も古い描画を直す
   // 確認用: ← → で画像を順に切り替え
   addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
