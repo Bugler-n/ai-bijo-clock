@@ -168,8 +168,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261018173753"></script>
-<script src="votes.js?v=20261018173753"></script>
+<script src="cards.js?v=20261018185341"></script>
+<script src="votes.js?v=20261018185341"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -783,7 +783,7 @@
     const c = CARDS[currentIdx]; if (!c) return;
     let list = favLoad(), msg;
     if (list.includes(c.id)) { list = list.filter(x => x !== c.id); msg = DEL_MSG[Math.floor(Math.random() * DEL_MSG.length)]; }
-    else { list.push(c.id); msg = ADD_MSG[Math.floor(Math.random() * ADD_MSG.length)]; }
+    else { list.push(c.id); msg = c.popup || ADD_MSG[Math.floor(Math.random() * ADD_MSG.length)]; }   // その子ごとの一言(なければ共通の文)
     try { Votes.report(c.id, list.includes(c.id)); } catch (e) {}   // 全体の集計へ送る
     favSave(list); syncFav();   // ボタンの文字が変わって幅が変わってから、その右隣に一言を出す
     favSay(msg);
