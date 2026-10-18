@@ -1,7 +1,0 @@
-.git
-.github
-.assetsignore
-wrangler.jsonc
-wrangler.toml
-node_modules
-.DS_Store
