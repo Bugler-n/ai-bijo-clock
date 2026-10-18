@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>メッセージ確認ギャラリー</title>
+<meta name="robots" content="noindex,nofollow">
 <style>
   :root { --bg: #0e0c12; --fg: #f1eef3; --accent: #ff8fb8; }
   * { box-sizing: border-box; }
@@ -24,9 +25,16 @@
   .it .s span { display: block; margin-top: 2px; color: #f1eef380; font-size: 11px; }
   .it .s span.long { color: #ffb347; }
   .it.hide { display: none; }
+  #gate { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; place-items: center; }
+  #gate form { display: flex; flex-direction: column; gap: 10px; width: min(320px, 86vw); }
+  #gate b { font-weight: 400; letter-spacing: .12em; }
+  #gate input { font: inherit; font-size: 16px; padding: 9px 12px; background: #1a1720; color: var(--fg); border: 1px solid #ffffff33; border-radius: 8px; }
+  #gate button { font: inherit; padding: 9px; border-radius: 8px; border: 1px solid #ffffff55; background: #ffffff14; color: var(--fg); cursor: pointer; }
+  #gate small { color: #ff9fb8; min-height: 1.2em; }
 </style>
 </head>
 <body>
+<div id="gate"><form id="gf"><b>メッセージ確認</b><input id="gp" type="password" placeholder="パスワード" autocomplete="off" autofocus><button type="submit">開く</button><small id="gm"></small></form></div>
 <header>
   <strong>メッセージ確認</strong>
   <label>検索 <input id="q" placeholder="番号・文字(例: 120, 彼氏, ありがと)"></label>
@@ -34,8 +42,23 @@
   <small id="cnt"></small>
 </header>
 <div id="grid"></div>
-<script src="cards.js?v=20261018160638"></script>
+<script src="cards.js?v=20261018173753"></script>
 <script>
+  // 簡易パスワード(入力値をハッシュで照合するだけの簡易的なもの。データ自体は cards.js から取得できるため、完全な秘匿ではない)
+  const SALT = '9573cbed9dddb03d', HASH = '33d7defe7c720f3924c821b60e2739b936e334a5285c73a5969b36176c59301f';
+  const hex = (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  async function check(pw) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT + pw)); return hex(d) === HASH; }
+  let started = false;
+  function unlock() { document.getElementById('gate').remove(); if (!started) { started = true; start(); } }
+  try { if (sessionStorage.getItem('mc_ok') === HASH) unlock(); } catch (e) {}
+  document.getElementById('gf').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let ok = false; try { ok = await check(document.getElementById('gp').value); } catch (err) {}
+    if (ok) { try { sessionStorage.setItem('mc_ok', HASH); } catch (err) {} unlock(); }
+    else { document.getElementById('gm').textContent = 'パスワードが違います'; document.getElementById('gp').select(); }
+  });
+  function start() {
+
   const grid = document.getElementById('grid'), q = document.getElementById('q'), cnt = document.getElementById('cnt'), only = document.getElementById('onlyLong');
   const esc = (t) => String(t || '').replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
   const items = CARDS.map((c, i) => {
@@ -54,6 +77,8 @@
     cnt.textContent = `${shown} / ${items.length} 件`;
   }
   q.addEventListener('input', apply); only.addEventListener('change', apply); apply();
+
+  }
 </script>
 </body>
 </html>
