@@ -37,10 +37,35 @@ const Votes = (() => {
     data.seeded = true;
     save();
   }
-  if (TEST_MODE && !data.seeded) randomize();
+  // (以前はテスト用に全員へランダムな票を割り当てていたが、全体の集計を使うので、行わない)
+
+  // ---- 全員分のしおり数(Cloudflare の /api/counts)。取れないときは、前回の値(なければ 0)で動く ----
+  const CK = 'bc_counts_v1', DK = 'bc_did';
+  let remote = {};
+  try { const o = JSON.parse(localStorage.getItem(CK) || '{}'); if (o && o.c) remote = o.c; } catch (e) {}
+  const did = (() => {   // ブラウザごとの匿名の番号(個人は特定しない)
+    try { let d = localStorage.getItem(DK); if (d && /^[0-9a-f-]{16,40}$/.test(d)) return d;
+      d = (crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join(''));
+      localStorage.setItem(DK, d); return d; } catch (e) { return 'a'.repeat(16) + Math.random().toString(16).slice(2, 10); }
+  })();
+  let fetching = false;
+  function refreshCounts() {
+    if (fetching || typeof fetch !== 'function') return; fetching = true;
+    fetch('/api/counts', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then((j) => {
+      if (j && j.counts) { remote = j.counts; try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), c: remote })); } catch (e) {} }
+    }).catch(() => {}).then(() => { fetching = false; });
+  }
+  refreshCounts(); setInterval(() => { if (!document.hidden) refreshCounts(); }, 60000);
+  // しおりを入れた/外したことを送る(失敗しても画面は止めない)。自分の端末の数字にもすぐ反映する
+  function report(id, on) {
+    remote[id] = Math.max(0, (remote[id] || 0) + (on ? 1 : -1));
+    try { fetch('/api/save', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, did, on: !!on }), keepalive: true }).catch(() => {}); } catch (e) {}
+  }
+  // 時計に出る重み: 人気があるほど少し多く出る。全員 0 なら、みんな同じ(穏やかに効かせる)
+  const weight = (id) => 1 + Math.sqrt(remote[id] || 0);
 
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
-  const count = (id) => data.n[id] || 0;
+  const count = (id) => remote[id] || 0;   // 全員分のしおり数
 
   // 票が多い順。同数は先にその票数に届いた子、それも同じなら固定の順(id のハッシュ)
   function ranking() {
@@ -53,7 +78,7 @@ const Votes = (() => {
   // 上位の人数: 2人ランクインするごとに1人だけ圏外になる = 上位は2人入るごとに1人ずつ増える。
   // ただし圏外が MIN_OUT 人を下回らないよう、増えるのは (全員 − MIN_OUT) まで。
   const topN = () => Math.min(BASE_TOP + Math.floor(data.ins / 2), Math.max(0, pool.length - MIN_OUT));
-  const isTop = (id) => rankOf(id) <= topN();
+  const isTop = (id) => true;   // 全員を時計に出す(人気は出る頻度の重みで反映する)
 
   function vote(id) {
     if (!canVote(id)) return { ok: false };
@@ -85,6 +110,9 @@ const Votes = (() => {
   }
   // いま出す番の子(いま上位にいる子に限る)。なければ null
   function thanks() {
+    return null;   // ランクインのお礼表示は使わない(ボードの一言は常時表示)
+  }
+  function _thanksOld() {
     const now = Date.now();
     const cur = schedule().find(sl => sl.start <= now && now < sl.end && isTop(sl.id));
     return cur ? cur.id : null;
@@ -101,6 +129,6 @@ const Votes = (() => {
   const threshold = () => { const r = ranking(), n = topN(); return r.length > n ? count(r[n - 1].id) : 0; };   // 最下位(上位に残れる最低ライン)の票数
   const reset = () => { data = empty(); data.seeded = true; save(); };   // 全員 0 票に戻す(テストデータの再割り当ては randomize())
 
-  return { TEST_MODE, SWITCH_MS, ENTER_MS, get TOP_N() { return topN(); }, count, canVote, vote, isTop, rankOf, ranking, waiting, threshold, thanks, schedule, randomize, justEntered, enteredAt, reset,
+  return { weight, report, did, TEST_MODE, SWITCH_MS, ENTER_MS, get TOP_N() { return topN(); }, count, canVote, vote, isTop, rankOf, ranking, waiting, threshold, thanks, schedule, randomize, justEntered, enteredAt, reset,
            indexOf: (id) => CARDS.findIndex(c => c.id === id) };
 })();

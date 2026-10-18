@@ -46,6 +46,7 @@
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
 <script src="cards.js?v=20261018173753"></script>
+<script src="votes.js?v=20261018173753"></script>
 <script>
   const KEY = 'bc_album';
   const load = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
@@ -73,7 +74,7 @@
       const { c, i } = byId.get(id);
       const d = document.createElement('div'); d.className = 'pic';
       d.innerHTML = `<a href="./?img=${i}&from=album"><img loading="lazy" decoding="async" alt="" src="${encodeURI(c.thumb || c.src)}"><div class="cap">${c.secret ? '<p class="sec">' + esc(c.secret) + '</p>' : ''}</div></a><button class="x" type="button" aria-label="アルバムから外す" title="アルバムから外す">✕</button>`;
-      d.querySelector('.x').addEventListener('click', () => { save(load().filter(x => x !== id)); say('そっと見送りました。また会えますように'); render(); });
+      d.querySelector('.x').addEventListener('click', () => { save(load().filter(x => x !== id)); try { Votes.report(id, false); } catch (e) {} say('そっと見送りました。また会えますように'); render(); });
       grid.appendChild(d);
     });
   }

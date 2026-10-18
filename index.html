@@ -273,16 +273,18 @@
   // 上位 Votes.TOP_N 人だけが対象(票の少ない子は vote.html で応援を待つ)
   let POOL = [];
   function refreshPool() {
-    POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude && Votes.isTop(CARDS[i].id));
-    if (!POOL.length) POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);
+    POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);   // 全員を出す。人気(しおりの数)が多い子は、出る頻度が少し増える
   }
   refreshPool();
   // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
   const SWITCH_MS = Votes.SWITCH_MS;   // テストモードは6秒、本番は15秒(votes.js で決める)
   // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
   function pickIdx(slot) {
-    const i = hash(`slot${slot}`) % POOL.length;
-    const p = hash(`slot${slot - 1}`) % POOL.length;
+    // 区間ごとに決まった乱数で、重み(人気)に応じて選ぶ。全員 0 なら、均等
+    const W = POOL.map((ix) => Votes.weight(CARDS[ix].id));
+    const total = W.reduce((a, b) => a + b, 0);
+    const pick = (sl) => { let r = (hash(`slot${sl}`) / 4294967296) * total; for (let k = 0; k < POOL.length; k++) { r -= W[k]; if (r < 0) return k; } return POOL.length - 1; };
+    const i = pick(slot), p = pick(slot - 1);
     return POOL[i === p ? (i + 1) % POOL.length : i];
   }
 
@@ -782,6 +784,7 @@
     let list = favLoad(), msg;
     if (list.includes(c.id)) { list = list.filter(x => x !== c.id); msg = DEL_MSG[Math.floor(Math.random() * DEL_MSG.length)]; }
     else { list.push(c.id); msg = ADD_MSG[Math.floor(Math.random() * ADD_MSG.length)]; }
+    try { Votes.report(c.id, list.includes(c.id)); } catch (e) {}   // 全体の集計へ送る
     favSave(list); syncFav();   // ボタンの文字が変わって幅が変わってから、その右隣に一言を出す
     favSay(msg);
     favEl.classList.remove('pop'); void favEl.offsetWidth; favEl.classList.add('pop');
