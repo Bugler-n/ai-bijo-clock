@@ -45,7 +45,7 @@
 <script src="cards.js?v=20261018173753"></script>
 <script>
   // 簡易パスワード(入力値をハッシュで照合するだけの簡易的なもの。データ自体は cards.js から取得できるため、完全な秘匿ではない)
-  const SALT = '9573cbed9dddb03d', HASH = '33d7defe7c720f3924c821b60e2739b936e334a5285c73a5969b36176c59301f';
+  const SALT = '2087cada08065d53', HASH = '1cb583e475469bcb030cb5488e6313501a7acdb286fa1c3586de3f0e26e20b2e';
   const hex = (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   async function check(pw) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT + pw)); return hex(d) === HASH; }
   let started = false;
