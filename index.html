@@ -92,14 +92,26 @@
   /* いいねと投票ページへのリンク(左下。どちらも常時表示) */
   #vbar { position: fixed; z-index: 5; left: calc(var(--pad) + 4px); bottom: calc(var(--pad) - 2px);
           display: flex; align-items: flex-end; gap: 10px; transition: opacity .4s ease; }
-  /* 写真の下(左端そろえ)に、いまの子のいいね数(常時表示)。位置は layout() の placeLikes で決める */
-  #likes { position: fixed; z-index: 4; left: 0; top: 0; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
-           color: #f1eef3d0; font-size: 15px; letter-spacing: .05em; transition: left 1s, top 1s; }
-  #likes:hover { color: #fff; }
-  #likes.pop svg { animation: pop .35s ease; }
   @keyframes pop { 40% { transform: scale(1.35); } }
-  #likes svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
-  .bare #likes { display: none; }
+  /* 左の余白が足りないときは、2つのリンクを縦に積む(写真に重ならないように)。ベースライン基準は下の段の vlink */
+  #vbar.col { flex-direction: column; align-items: flex-start; gap: 10px; }
+  #vbar.col #alink { order: -1; }
+  .bare #fav { display: none; }
+  /* しおり(推しアルバムに入れる)。写真の左下。位置は placeLikes で決める */
+  #fav { position: fixed; z-index: 4; left: 0; top: 0; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+         color: #f1eef3a0; font-size: 13px; letter-spacing: .08em; transition: left 1s, top 1s, color .2s; }
+  #fav:hover { color: #fff; }
+  #fav:focus { outline: none; }
+  #fav:focus-visible { outline: 2px solid #ffffff88; outline-offset: 4px; border-radius: 4px; }
+  #fav svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  #fav.on { color: var(--accent); }
+  #fav.on svg { fill: currentColor; }
+  #fav.pop svg { animation: pop .35s ease; }
+  #favMsg { position: fixed; z-index: 6; left: 0; top: 0; opacity: 0; pointer-events: none; white-space: nowrap;
+            background: #000d; border: 1px solid #ffffff33; border-radius: 16px; padding: 6px 14px; font-size: 13px; letter-spacing: .08em; color: var(--fg);
+            transition: opacity .3s; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis; }
+  #favMsg.show { opacity: 1; }
+  .bare #favMsg { display: none; }
   /* 投票リンク: タイトル(左に美人時計と同じピンクの点)と、その下に説明の2行 */
   #vlink { display: block; color: #f1eef3a0; text-decoration: none; line-height: 1.3; }
   #vlink b { display: block; font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
@@ -110,6 +122,13 @@
   #vlink small { display: block; padding-left: calc(5px + .9em * 16 / 14); }
   #vlink small { margin-top: 4px; font-size: 14px; letter-spacing: .1em; color: #f1eef380; }
   #vlink:hover b, #vlink:hover small { color: #fff; }
+  #alink { display: block; color: #f1eef3a0; text-decoration: none; line-height: 1.3; }
+  #alink b { display: block; font-size: 16px; font-weight: 300; letter-spacing: .2em; color: var(--fg); }
+  #alink small { display: block; margin-top: 4px; font-size: 13px; letter-spacing: .1em; color: #f1eef380; }
+  #alink:hover b, #alink:hover small { color: #fff; }
+  #alink b::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-right: .9em; vertical-align: .14em; box-shadow: 0 0 7px var(--accent); }
+  #alink small { padding-left: calc(5px + .9em * 16 / 14); }
+  @media (pointer: coarse) { #alink { padding: 6px 10px 6px 0; } }
   body.idle { cursor: none; }
 
   /* gallery.html の埋め込み用: ヘッダー・ボタン・余白なし */
@@ -119,7 +138,7 @@
 
   /* タッチ端末: いいねを押しやすく(見た目はそのまま、押せる範囲だけ広げる) */
   @media (pointer: coarse) {
-    #likes { padding: 12px 16px 12px 6px; margin: -12px 0 0 -6px; font-size: 16px; }
+    #fav { padding: 12px 12px; margin: -12px 0 0 0; font-size: 14px; }
     #vlink { padding: 6px 10px 6px 0; }
   }
   @media (max-width: 520px) {
@@ -141,22 +160,23 @@
 <div id="screen"></div>
 <noscript><p style="position:fixed;top:45%;width:100%;text-align:center">JavaScript を有効にしてください</p></noscript>
 <div id="sec" aria-hidden="true"><i></i></div>
-<div id="likes" role="button" tabindex="0" aria-label="この子にいいね" aria-live="polite"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-8.6C1 9.2 3 5.5 6.6 5.5c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.6 3.7 3.9 6.9C19 16.6 12 21 12 21z"/></svg><span id="likesN">0</span></div>
+<div id="fav" role="button" tabindex="0" aria-label="推しアルバムに入れる" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg><span id="favT">アルバムに入れる</span></div>
+<div id="favMsg" role="status"></div>
 <div id="vbar">
-  <a id="vlink" href="vote.html"><b>みんなで推し活</b><small>推し待ちAI美女はこちら<i id="vbase"></i></small></a>
+  <a id="alink" href="album.html"><b>秘密の推しアルバム</b><small><span id="alinkN">まだ誰も連れて帰っていません</span><i id="vbase"></i></small></a>
 </div>
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261017235811"></script>
-<script src="votes.js?v=20261017235811"></script>
+<script src="cards.js?v=20261018155026"></script>
+<script src="votes.js?v=20261018155026"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
   if (new URLSearchParams(location.search).has('bare')) document.documentElement.classList.add('bare');
   const params = new URLSearchParams(location.search);
   const FIXED_TIME = /^\d{1,2}:\d{2}$/.test(params.get('t') || '') ? params.get('t') : null; // ?t=12:34
-  const SHOW_MSG = params.has('msg');   // ?msg=1 : ランクイン時のお礼メッセージを常に表示(確認用)
+  const SHOW_MSG = !params.has('nomsg');   // ボードの一言は常時表示(?nomsg=1 で非表示)
   let manualIdx = params.has('img') ? (+params.get('img') % CARDS.length + CARDS.length) % CARDS.length : null; // ?img=5
 
   // ---- ホモグラフィ: 単位矩形 (0,0)(W,0)(W,H)(0,H) → 四隅 q ----
@@ -531,6 +551,12 @@
     // タイトルの左端から 64px 右。写真に重なりそうなときは、写真の手前で止める(ただしタイトルの左端よりは右)
     const bl = brand.getBoundingClientRect().left;
     vbar.style.left = '0px';
+    vbar.classList.remove('col'); vbar.style.maxWidth = '';
+    if (!compact && !bare) {   // 写真の左に置くとき: 横に並べて入らなければ縦に積み、それでも入らなければ折り返す
+      const room = cx - c.w * s / 2 - 16 - (bl + 10);
+      if (vbar.offsetWidth > room) vbar.classList.add('col');
+      vbar.style.maxWidth = Math.max(110, room) + 'px';
+    }
     vbar.style.left = Math.max(bl + 10, Math.min(bl + 64, cx - c.w * s / 2 - vbar.offsetWidth - 16)) + 'px';
     // 投票リンクの最後の行のベースラインを、写真の下辺に合わせる
     vbar.style.bottom = '0px';
@@ -554,11 +580,11 @@
 
   // いいね数を写真の左下(写真の内側)に置く。最初の1回は動かさず、写真の大きさが変わるときだけゆっくり追従する
   function placeLikes(photoLeft, photoBottom) {
-    const el = document.getElementById('likes');
-    if (!el._placed) el.style.transition = 'none';
-    el.style.left = (photoLeft + 2) + 'px';
-    el.style.top = (photoBottom + 6) + 'px';
-    if (!el._placed) { void el.offsetWidth; el.style.transition = ''; el._placed = true; }
+    const fv = document.getElementById('fav');
+    if (!fv._placed) fv.style.transition = 'none';
+    fv.style.left = (photoLeft + 2) + 'px';
+    fv.style.top = (photoBottom + 6) + 'px';
+    if (!fv._placed) { void fv.offsetWidth; fv.style.transition = ''; fv._placed = true; }
   }
 
   // ---- 表示切替(クロスフェード) ----
@@ -577,11 +603,12 @@
     const img = scene.querySelector('img');
     const go = () => {
       const old = current;
+      const same = !!old && old._idx === idx;   // 同じ子の描き直し(分が変わったときの時刻更新)は、フェードさせず一瞬で入れ替える
+      if (same) { layer.style.transition = 'none'; old.style.transition = 'none'; }
       current = layer; currentIdx = idx;
-      if (typeof syncLike === 'function') syncLike();
       setTimeout(() => {   // rAF はバックグラウンドタブで止まるので setTimeout を使う
         layer.classList.add('show');
-        if (old) { old.classList.remove('show'); setTimeout(() => old.remove(), 2100); }
+        if (old) { old.classList.remove('show'); setTimeout(() => old.remove(), same ? 50 : 2100); }
       }, 30);
     };
     if (img.complete) go(); else { img.onload = go; img.onerror = go; }
@@ -611,7 +638,7 @@
     const pinIdx = pinId ? Votes.indexOf(pinId) : -1;
     const thanksOn = pinIdx >= 0;
     const thanks = thanksOn ? String(hash(`${pinId}${Votes.enteredAt(pinId)}`)) : (SHOW_MSG ? '1' : '');
-    const slotChanged = !thanksOn && slot !== lastSlot;   // 固定中は絵を替えない
+    const slotChanged = !thanksOn && manualIdx === null && slot !== lastSlot;   // 固定中は絵を替えない
     if (text !== lastText || slotChanged || manualIdx !== null || thanksOn !== lastThanks) {
       const idx = manualIdx !== null ? manualIdx : thanksOn ? pinIdx : pickIdx(slot);
       if (text !== lastText || slotChanged || idx !== currentIdx || thanksOn !== lastThanks) show(idx, text, seed, thanks);
@@ -702,22 +729,57 @@
   updateSec();
   setInterval(updateSec, 250);
 
-  // 写真の下のいいね数を、表示中の子の票数に合わせる(票の増減は他の画面で起きるので定期的に読み直す)
-  function syncLike() {
-    const c = CARDS[currentIdx];
-    if (c) document.getElementById('likesN').textContent = Votes.count(c.id);
+  // ---- 推しアルバム(しおり): この端末のブラウザにだけ保存。サーバーには送らない ----
+  const FAV_KEY = 'bc_album';
+  const favLoad = () => { try { const a = JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const favSave = (a) => { try { localStorage.setItem(FAV_KEY, JSON.stringify(a)); } catch (e) {} };
+  const favEl = document.getElementById('fav'), favMsg = document.getElementById('favMsg');
+  const ADD_MSG = ['アルバムに、そっと入れました', 'いい目をしてますね。保存しました', 'あなたの推し、1枚追加です', 'このまなざし、持ち帰りました', 'ひとりじめしても、いいんですよ'];
+  const DEL_MSG = ['そっと見送りました', 'またどこかで会えますように'];
+  let favTimer;
+  function favSay(t) {
+    favMsg.textContent = t;
+    // ボタンの少し下(写真から離す)に出す。右に入りきらなければ、ボタンの左端にそろえる
+    const r = favEl.getBoundingClientRect(), w = favMsg.offsetWidth, h = favMsg.offsetHeight;
+    let x = r.right + 14, y = r.bottom + 14;
+    if (x + w > innerWidth - 8) x = Math.max(8, Math.min(r.left, innerWidth - 8 - w));
+    if (y + h > innerHeight - 8) y = Math.max(8, innerHeight - 8 - h);
+    favMsg.style.left = x + 'px'; favMsg.style.top = y + 'px';
+    favMsg.classList.add('show'); clearTimeout(favTimer); favTimer = setTimeout(() => favMsg.classList.remove('show'), 2600); }
+  function syncFav() {
+    const c = CARDS[currentIdx], list = favLoad(), on = !!c && list.includes(c.id);
+    favEl.classList.toggle('on', on); favEl.setAttribute('aria-pressed', on);
+    document.getElementById('favT').textContent = on ? 'アルバムに入っています' : 'アルバムに入れる';
+    const n = list.length;
+    // 保存数に応じて言い方が変わる(1行・短く。実際の保存数と全体数だけを使う)
+    const total = CARDS.filter(x => !x.exclude).length, rem = Math.max(0, total - n);
+    const msg = n === 0 ? 'まだ誰も連れて帰っていません'
+      : rem === 0 ? '全員の秘密を、あなただけが知っている'
+      : rem <= 20 ? `あと${rem}人。コンプリートが見えてきた`
+      : n < 5 ? `最初の一人。あと${rem}人が待っている`
+      : n < 20 ? `${n}人。もう、あと戻りできない`
+      : `${n}人。残る${rem}人の秘密は、まだ闇の中`;
+    const aN = document.getElementById('alinkN');
+    if (aN.textContent !== msg) { aN.textContent = msg; if (current) layout(current, currentIdx); }   // 文字の長さが変わったら、写真に重ならないよう位置を取り直す
   }
-  setInterval(syncLike, 1000);
-  // 写真の下のハートを押すと、表示中の子のいいねが +1 される
-  const likesEl = document.getElementById('likes');
-  function giveLike() {
-    const c = CARDS[currentIdx];
-    if (!c || !Votes.vote(c.id).ok) return;
-    syncLike(); tick();
-    likesEl.classList.remove('pop'); void likesEl.offsetWidth; likesEl.classList.add('pop');
+  function toggleFav() {
+    const c = CARDS[currentIdx]; if (!c) return;
+    let list = favLoad(), msg;
+    if (list.includes(c.id)) { list = list.filter(x => x !== c.id); msg = DEL_MSG[Math.floor(Math.random() * DEL_MSG.length)]; }
+    else { list.push(c.id); msg = ADD_MSG[Math.floor(Math.random() * ADD_MSG.length)]; }
+    favSave(list); syncFav();   // ボタンの文字が変わって幅が変わってから、その右隣に一言を出す
+    favSay(msg);
+    favEl.classList.remove('pop'); void favEl.offsetWidth; favEl.classList.add('pop');
   }
-  likesEl.addEventListener('click', giveLike);
-  likesEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); giveLike(); } });
+  favEl.addEventListener('click', toggleFav);
+  favEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFav(); } });
+  setInterval(syncFav, 1000);
+  addEventListener('storage', syncFav);
+
+  // 秘密のアルバムから開いたときは30秒だけその子を見せて、そのあとは通常の自動切替に戻る
+  if (params.get('from') === 'album' && manualIdx !== null) {
+    setTimeout(() => { manualIdx = null; lastSlot = -1; tick(); }, 30000);
+  }
 
   tick();
   if (!FIXED_TIME) schedule();

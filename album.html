@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>秘密の推しアルバム - AI美女時計</title>
+<style>
+  :root { --bg: #0e0c12; --fg: #f1eef3; --accent: #ff8fb8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 22px 24px 4px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 21px; font-weight: 300; letter-spacing: .25em; }
+  h1::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+               margin-right: .9em; vertical-align: .12em; box-shadow: 0 0 10px var(--accent); }
+  .count { color: #f1eef3a0; font-size: 13px; letter-spacing: .1em; }
+  .lead { padding: 6px 24px 0; margin: 0; color: #f1eef3b8; font-size: 14px; line-height: 1.9; min-height: 3.6em; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; padding: 18px 24px 110px; }
+  .pic { position: relative; background: #1a1720; border: 1px solid #ffffff1f; border-radius: 10px; overflow: hidden; }
+  .pic a { display: block; color: inherit; text-decoration: none; }
+  .pic img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; transition: transform .35s; }
+  .pic:hover img { transform: scale(1.04); }
+  .pic .cap { padding: 7px 8px 8px; font-size: 12px; line-height: 1.5; color: #f1eef3c8; }
+  .pic .cap .sec { display: block; margin: 0; padding: 2px 0 2px 10px; border-left: 2px solid #ff8fb866; font-size: 13px; line-height: 1.7; letter-spacing: 0; color: #f1eef3e0; }
+  .pic .cap small { display: block; color: #f1eef380; font-size: 11px; }
+  .pic .x { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer;
+            background: #000a; color: #fff; font-size: 14px; line-height: 1; opacity: 0; transition: opacity .2s; }
+  .pic:hover .x, .pic .x:focus-visible { opacity: 1; }
+  @media (pointer: coarse) { .pic .x { opacity: .9; } }
+  .empty { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: #f1eef3a0; line-height: 2; }
+  .empty b { display: block; font-size: 17px; font-weight: 300; letter-spacing: .15em; color: var(--fg); margin-bottom: 6px; }
+  .empty a { color: var(--accent); }
+  #back { position: fixed; z-index: 5; left: 50%; bottom: 20px; transform: translateX(-50%); white-space: nowrap;
+          background: #000c; border: 1px solid #ffffff44; border-radius: 22px; padding: 11px 26px; color: var(--fg);
+          font-size: 14px; letter-spacing: .12em; text-decoration: none; backdrop-filter: blur(6px); }
+  #back:hover { background: #000; border-color: #ffffff99; }
+  #toast { position: fixed; z-index: 5; left: 50%; bottom: 76px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+           background: #000d; border: 1px solid #ffffff33; border-radius: 22px; padding: 10px 20px; font-size: 13px; transition: opacity .3s, transform .3s; }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  @media (max-width: 520px) { header, .lead { padding-left: 14px; padding-right: 14px; } #grid { padding: 14px 14px 100px; gap: 10px; grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header><h1>秘密の推しアルバム</h1><span class="count" id="count"></span></header>
+<p class="lead" id="lead"></p>
+<div id="grid"></div>
+<div id="toast" role="status"></div>
+<a id="back" href="./">時計に戻る</a>
+<script src="cards.js?v=20261018155026"></script>
+<script>
+  const KEY = 'bc_album';
+  const load = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const save = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
+  const byId = new Map(CARDS.map((c, i) => [c.id, { c, i }]));
+  const esc = (t) => String(t).replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
+  const $ = (id) => document.getElementById(id);
+  let toastTimer;
+  const say = (t) => { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800); };
+
+  const leadFor = (n) => n === 0 ? 'まだ白紙。気になった子を、しおりで連れてきて。'
+    : n < 3 ? 'はじめの一枚。いい目してる。'
+    : n < 10 ? 'あなたの「刺さる」が、集まってきた。'
+    : n < 30 ? 'もう立派なコレクション。趣味、バレてるよ。'
+    : '写真集みたいになってきた。';
+
+  function render() {
+    const ids = load().filter(id => byId.has(id));   // 公開から外れた子は静かに消える
+    save(ids);
+    $('count').textContent = ids.length ? `${ids.length}人` : '';
+    $('lead').textContent = leadFor(ids.length);
+    const grid = $('grid'); grid.innerHTML = '';
+    if (!ids.length) { grid.innerHTML = '<div class="empty"><b>ここは、あなただけの秘密の部屋</b>時計の画面で、しおりのマークを押すと、この子が入ってきます。<br><a href="./">時計をのぞきに行く</a></div>'; return; }
+    ids.slice().reverse().forEach(id => {   // 新しく迎えた子が先頭
+      const { c, i } = byId.get(id);
+      const d = document.createElement('div'); d.className = 'pic';
+      d.innerHTML = `<a href="./?img=${i}&from=album"><img loading="lazy" decoding="async" alt="" src="${encodeURI(c.thumb || c.src)}"><div class="cap">${c.secret ? '<p class="sec">' + esc(c.secret) + '</p>' : ''}</div></a><button class="x" type="button" aria-label="アルバムから外す" title="アルバムから外す">✕</button>`;
+      d.querySelector('.x').addEventListener('click', () => { save(load().filter(x => x !== id)); say('そっと見送りました。また会えますように'); render(); });
+      grid.appendChild(d);
+    });
+  }
+  // メッセージが2行に収まるよう、はみ出すときだけ文字を少し小さくする(下限 10.5px)
+  function fitText() {
+    document.querySelectorAll('.pic .sec').forEach((el) => {
+      let fs = 13; el.style.fontSize = fs + 'px';
+      while (fs > 10.5 && el.clientHeight > fs * 1.7 * 2 + 4) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+    });
+  }
+  const _render = render;
+  render = function () { _render(); fitText(); };
+  addEventListener('resize', fitText);
+  addEventListener('storage', render);
+  render();
+</script>
+</body>
+</html>
