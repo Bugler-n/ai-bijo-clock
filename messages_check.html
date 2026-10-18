@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>メッセージ確認ギャラリー</title>
+<style>
+  :root { --bg: #0e0c12; --fg: #f1eef3; --accent: #ff8fb8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: #0e0c12ee; backdrop-filter: blur(6px); padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #ffffff1f; }
+  header input { font: inherit; font-size: 14px; padding: 5px 10px; width: 14em; background: #1a1720; color: var(--fg); border: 1px solid #ffffff33; border-radius: 6px; }
+  header label { font-size: 13px; color: #f1eef3b0; }
+  header small { color: #f1eef380; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 14px 16px 60px; }
+  .it { display: flex; gap: 10px; background: #1a1720; border: 1px solid #ffffff1a; border-radius: 10px; padding: 8px; }
+  .it img { width: 104px; flex: none; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; background: #000; }
+  .it .t { min-width: 0; font-size: 13px; line-height: 1.6; }
+  .it .no { color: #f1eef380; font-size: 11px; }
+  .it .no a { color: #8cf; text-decoration: none; }
+  .it .b { margin: 2px 0 6px; font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+  .it .b span { font-weight: 400; font-size: 11px; color: #f1eef380; margin-right: 6px; }
+  .it .s { margin: 0; padding-left: 8px; border-left: 2px solid #ff8fb866; color: #f1eef3e0; }
+  .it .s span { display: block; margin-top: 2px; color: #f1eef380; font-size: 11px; }
+  .it .s span.long { color: #ffb347; }
+  .it.hide { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <strong>メッセージ確認</strong>
+  <label>検索 <input id="q" placeholder="番号・文字(例: 120, 彼氏, ありがと)"></label>
+  <label><input type="checkbox" id="onlyLong"> 秘密が長い(38文字超)だけ</label>
+  <small id="cnt"></small>
+</header>
+<div id="grid"></div>
+<script src="cards.js?v=20261018160638"></script>
+<script>
+  const grid = document.getElementById('grid'), q = document.getElementById('q'), cnt = document.getElementById('cnt'), only = document.getElementById('onlyLong');
+  const esc = (t) => String(t || '').replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
+  const items = CARDS.map((c, i) => {
+    const el = document.createElement('div'); el.className = 'it';
+    const n = i + 1, sl = (c.secret || '').length;
+    el.innerHTML = `<img loading="lazy" decoding="async" alt="" src="${encodeURI(c.thumb || c.src)}">` +
+      `<div class="t"><div class="no">#${n}(index ${i}) ・ <a href="index.html?img=${i}" target="_blank">時計で開く</a></div>` +
+      `<div class="b"><span>ボード</span>${esc(c.msg) || '(なし)'} <span>${(c.msg || '').length}文字</span></div>` +
+      `<p class="s">${esc(c.secret) || '(なし)'}<span class="${sl > 38 ? 'long' : ''}">${sl}文字</span></p></div>`;
+    grid.appendChild(el);
+    return { el, n, text: `${n} ${c.msg || ''} ${c.secret || ''} ${c.src}`, sl };
+  });
+  function apply() {
+    const k = q.value.trim(); let shown = 0;
+    items.forEach((it) => { const ok = (!k || it.text.includes(k)) && (!only.checked || it.sl > 38); it.el.classList.toggle('hide', !ok); if (ok) shown++; });
+    cnt.textContent = `${shown} / ${items.length} 件`;
+  }
+  q.addEventListener('input', apply); only.addEventListener('change', apply); apply();
+</script>
+</body>
+</html>
