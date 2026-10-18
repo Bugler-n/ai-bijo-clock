@@ -49,8 +49,8 @@
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
 <a id="rk" href="ranking.html">みんなの推しランキング</a>
-<script src="cards.js?v=20261018195935"></script>
-<script src="votes.js?v=20261018195935"></script>
+<script src="cards.js?v=20261018233014"></script>
+<script src="votes.js?v=20261018233014"></script>
 <script>
   const KEY = 'bc_album';
   const load = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
@@ -62,7 +62,8 @@
   const say = (t) => { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800); };
 
   const leadFor = (n) => n === 0 ? 'まだ白紙。気になった子を、しおりで連れてきて。'
-    : n < 3 ? 'はじめの一枚。いい目してる。'
+    : n === 1 ? 'はじめの一枚。いい目してる。'
+    : n === 2 ? 'ふたり目。もう、気になってるね。'
     : n < 10 ? 'あなたの「刺さる」が、集まってきた。'
     : n < 30 ? 'もう立派なコレクション。趣味、バレてるよ。'
     : '写真集みたいになってきた。';

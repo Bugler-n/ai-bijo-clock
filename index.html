@@ -168,8 +168,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261018195935"></script>
-<script src="votes.js?v=20261018195935"></script>
+<script src="cards.js?v=20261018233014"></script>
+<script src="votes.js?v=20261018233014"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -213,56 +213,6 @@
   }
   const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
 
-  // 上位入りした子がボードに小さく書く一言。絵の雰囲気(moodOf)ごとに20個、計100。上位入りした時刻で1つ決まる(その子の2分間は同じ言葉)
-  const BOARD_MSGS = {
-    night: [
-      '夜更かし組、ありがと', '夜景にも負けない感謝', '今夜の主役になれた〜', '夜イチで泣きそう', 'キラキラ夜に感謝！',
-      '夜もずっと推せる', '夜の街で優勝した', 'ネオンより光ってる？', '深夜にうれしい知らせ', '眠気ふっとんだ〜',
-      '夜風が気持ちいい〜', '月も祝ってくれてる', '夜まで見ててくれた', '星の数ほど感謝！', '夜でも見つけてくれた',
-      '今夜は眠れない〜', '夜のご褒美すぎる', '街の灯りより嬉しい', '夜もがんばれちゃう', '夜更かしのお礼だよ',
-    ],
-    blue: [
-      '空よりでっかい感謝！', '青空レベルでうれしい', '風みたいにありがと〜', '今日、天気最高すぎ', 'さわやか優勝、感謝！',
-      '空まで飛べそう〜', '晴れ女でよかった〜', '雲の上までありがと', '海みたいに広い感謝', '夏みたいにうれしい',
-      '青春っぽくて泣ける', '気分は快晴です！', '太陽より眩しい感謝', '風に乗って届け〜', '青い空に叫びたい！',
-      '心がスカッと晴れた', 'お散歩日和の気分〜', '爽快、ありがと〜！', '空色の感謝を込めて', '今日いちばん快晴！',
-    ],
-    warm: [
-      'ぽかぽか、ありがと', 'エモい、ありがと〜', '夕焼け級にうれしい', 'じんわり泣けた〜', 'ほっこり感謝です',
-      'やさしさが沁みた', '胸がきゅんとした〜', 'あったか気持ち届いた', 'ふわっと笑顔になる', '心まであったかい〜',
-      '癒やされたのは私〜', 'ハッピー感謝です！', 'とろけるほどうれしい', '今日は幸せの日〜', 'まるごとありがと〜',
-      '光に包まれた気分', 'ほわほわうれしい〜', 'やさしい世界すぎる', 'しあわせ満タンです', 'ぎゅっとしたい感謝',
-    ],
-    chalk: [
-      '黒板いっぱい感謝！', '100点満点、感謝！', '先生ごめん、うれしい', 'チョークで愛を込めて', '放課後も推してね',
-      '学年イチ感謝です', '赤点回避の気分〜', 'ノートに書いとくね', '今日の宿題は推すこと', '皆勤賞あげたい〜',
-      '授業中もにやけた', '席替えしても推して', '黒板消さないでね〜', '教室で叫びたい！', '内申点アップした？',
-      '恋の公式、解けた〜', '大好きって書いとく', '修学旅行並みに嬉しい', '一生の思い出にする', '満点以上の感謝です',
-    ],
-    plain: [
-      'ガチ感謝、ありがと', 'うれしすぎて無理〜', 'みんな優勝すぎる〜', '推されてるの尊い', 'まじありがと〜！',
-      '愛が重いくらい感謝', '神対応ありがと〜', '全人類に感謝です', 'えぐいうれしい〜', '号泣してもいい？',
-      '推し活ありがと〜', '今日から親友だね', '一生ついてくよ〜', '心臓ぎゅんってした', '好きしかない！',
-      '最高の日になった〜', '感謝のハグ送る〜', '無限にありがと〜', '運命かもしれない〜', '世界一うれしい！',
-    ],
-  };
-  // 絵全体の平均色から雰囲気を決める(黒板は ink で判定)
-  function moodOf(img, c) {
-    if (c.ink === 'chalk') return 'chalk';
-    try {
-      const cv = document.createElement('canvas'); cv.width = 48; cv.height = Math.max(1, Math.round(48 * c.h / c.w));
-      const cx = cv.getContext('2d', { willReadFrequently: true });
-      cx.drawImage(img, 0, 0, cv.width, cv.height);
-      const d = cx.getImageData(0, 0, cv.width, cv.height).data;
-      let r = 0, g = 0, b = 0, n = d.length / 4;
-      for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
-      r /= n; g /= n; b /= n;
-      if ((r + g + b) / 3 < 85) return 'night';
-      if (b > r + 12 && b >= g) return 'blue';
-      if (r > b + 30) return 'warm';
-    } catch (e) {}
-    return 'plain';
-  }
   // ---- 時刻 → 画像(同じ分なら同じ絵。前の分とは必ず別の絵) ----
   function hash(s) {
     let h = 2166136261;
@@ -270,7 +220,6 @@
     return h >>> 0;
   }
   // 時計に使う画像(exclude 指定を除く)。?img=N での直接指定は除外画像も表示できる
-  // 上位 Votes.TOP_N 人だけが対象(票の少ない子は vote.html で応援を待つ)
   let POOL = [];
   function refreshPool() {
     POOL = CARDS.map((c, i) => i).filter(i => !CARDS[i].exclude);   // 全員を出す。人気(しおりの数)が多い子は、出る頻度が少し増える
@@ -279,23 +228,61 @@
   // 絵を切り替える間隔(ミリ秒)。時刻の文字は現在時刻のまま、絵だけこの間隔で変わる
   const SWITCH_MS = Votes.SWITCH_MS;   // テストモードは6秒、本番は15秒(votes.js で決める)
   // 同じ区間なら同じ絵。直前の区間とは必ず別の絵
-  // 区間番号から偏りの少ない乱数を作る(連番の文字列を FNV で混ぜると、偏りが出たため。整数をそのまま強く混ぜる)
+  // ---- 表示順(ここから) ----
+  // 一度出た子は、しばらく出ない。全員を1周(=1エポック)で必ず1回ずつ出す「シャッフル周回」にして、
+  // 周の変わり目も含めて、同じ子が COOL 区間以内に戻ってこないようにする(COOL = 全員の約1/4)。
+  // 人気(しおりの数)が多い子は、周の最後の「おかわり枠」(全員の約1/4)に、追加で入りやすい。おかわりも、本編から COOL 以上あけて並べる。
+  // 順番は、区間番号とエポック番号だけから決まる(状態を持たない)ので、どの端末でも、ほぼ同じ子が同じ時刻に出る(人気の数字が端末で違うと、おかわり枠だけ少し違う)。
   function mix(x, salt) {
     x = (x ^ salt) >>> 0;
     x = Math.imul(x ^ (x >>> 16), 0x85ebca6b);
     x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35);
     return (x ^ (x >>> 16)) >>> 0;
   }
-  function pickIdx(slot) {
-    // 区間ごとに決まった乱数で、重み(人気)に応じて選ぶ。全員 0 なら、均等。どの端末でも、同じ区間なら同じ子が出る
-    const W = POOL.map((ix) => Votes.weight(CARDS[ix].id));
-    const total = W.reduce((a, b) => a + b, 0);
-    const pick = (sl, t) => { let r = (mix(sl + t * 7919, t ? 0x85ebca77 : 0x9e3779b9) / 4294967296) * total; for (let k = 0; k < POOL.length; k++) { r -= W[k]; if (r < 0) return k; } return POOL.length - 1; };
-    const prev = pick(slot - 1, 0);
-    let k = pick(slot, 0), t = 1;
-    while (k === prev && t < 6) { k = pick(slot, t); t++; }   // 直前の区間と同じ子は避ける
-    return POOL[k];
+  function rngOf(seed) { let n = 0; return () => mix(n++, seed) / 4294967296; }
+  function shuffled(arr, rnd) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  // perm の先頭 B 個に、直前の末尾(tail)にいた子が入らないよう、後ろの子と入れ替える
+  function avoidTail(perm, tail, B) {
+    if (!tail.length) return perm;
+    const ts = new Set(tail);
+    for (let i = 0; i < Math.min(B, perm.length); i++) {
+      if (!ts.has(perm[i])) continue;
+      for (let j = B; j < perm.length; j++) if (!ts.has(perm[j])) { const t = perm[i]; perm[i] = perm[j]; perm[j] = t; break; }
+    }
+    return perm;
   }
+  const epochCache = new Map(), EPOCH_DEPTH = 3;   // 前の周を3周さかのぼって計算する(さらに前は、先頭の調整なしの近似)
+  function epochSeq(e, N, depth) {
+    const key = e + '|' + N;
+    if (depth === EPOCH_DEPTH && epochCache.has(key)) return epochCache.get(key);
+    const B = Math.max(1, Math.min(Math.floor(N / 4), N - 1));
+    const extraN = Math.min(N, Math.round(N / 4));
+    const prevTail = depth > 0 ? epochSeq(e - 1, N, depth - 1).slice(-B) : [];   // 前の周の末尾(前の周の頭の調整は省いた近似)
+    const rnd = rngOf(mix(e + 1000, 0x51ed270b));
+    const round0 = avoidTail(shuffled(Array.from({ length: N }, (_, k) => k), rnd), prevTail, B);
+    // おかわり枠: 人気の重みで、重複なしに extraN 人を選ぶ(Efraimidis–Spirakis)。重みは 0.5 刻みに丸めて、細かい変動に左右されないようにする
+    const keyed = Array.from({ length: N }, (_, k) => {
+      const w = Math.max(1, Math.round(Votes.weight(CARDS[POOL[k]].id) * 2) / 2);
+      return [Math.pow(Math.max(rnd(), 1e-9), 1 / w), k];
+    }).sort((x, y) => y[0] - x[0]).slice(0, extraN).map((x) => x[1]);
+    // おかわりの並び: 本編で出てから COOL 以上あけるため、本編の終盤にいた子ほど、おかわり枠の後ろに置く(それ以外は、ランダムな順)
+    const pos0 = new Array(N); round0.forEach((k, i) => { pos0[k] = i; });
+    const need = (k) => Math.max(0, pos0[k] - (N - B));   // この位置以降でないと、本編との間隔が B 未満になる
+    const free = shuffled(keyed.filter((k) => need(k) === 0), rnd);
+    const tight = keyed.filter((k) => need(k) > 0).sort((x, y) => need(y) - need(x));   // 制約が強い順
+    const round1 = free.concat(tight.slice().reverse());   // 制約の弱い順に、後ろへ(強い子ほど最後尾)
+    const seq = round0.concat(round1);
+    if (depth === EPOCH_DEPTH) { epochCache.set(key, seq); if (epochCache.size > 6) epochCache.delete(epochCache.keys().next().value); }
+    return seq;
+  }
+  function pickIdx(slot) {
+    const N = POOL.length;
+    if (N < 2) return POOL[0];
+    const L = N + Math.min(N, Math.round(N / 4));   // 1周の区間数(本編 N + おかわり)
+    const e = Math.floor(slot / L), pos = slot - e * L;
+    return POOL[epochSeq(e, N, EPOCH_DEPTH)[pos]];
+  }
+  // ---- 表示順(ここまで) ----
 
   // ---- 手書き風フォント(分ごとに切り替わる)。scale は見た目の大きさ補正、stroke は太らせる量(em) ----
   const FONTS = [
@@ -383,12 +370,12 @@
     span.style.webkitTextStroke = `${font.stroke}em currentColor`;
     span.style.paintOrder = 'stroke fill';
     card.appendChild(span);
-    // 上位入りの直後は、時刻の下に「応援ありがとう」を小さく書く
+    // 時刻の下に、ボードの一言を小さく書く
     let note = null;
     if (thanks) {
       note = document.createElement('span');
       note.className = 'thanks';
-      // 文言は絵の雰囲気が分かる読み込み後に入れる(下の setNote)。thanks はその選び方の種
+      // 文言は、絵の読み込み後に入れる(下の setNote)
       note.style.cssText = `position:absolute;left:${(bx0 + (c.msgdx || 0) * (bx1 - bx0)) * W}px;width:${(bx1 - bx0) * W}px;text-align:center;` +
         `top:${by0 * H + (by1 - by0) * H * 0.65}px;line-height:1;` +
         `font-family:"${font.name}","Yomogi","Hiragino Maru Gothic ProN",cursive;font-weight:${font.weight};` +
@@ -483,9 +470,7 @@
     fit();
     if (note) {
       const setNote = () => {
-        // images.csv のランクインメッセージ(c.msg)を優先。無い画像だけ雰囲気別の定型文
-        const list = BOARD_MSGS[moodOf(img, c)];
-        note.textContent = c.msg || list[+thanks % list.length];
+        note.textContent = c.msg || '';   // images.csv の「ランクインメッセージ」列(ボードの一言)
         fit();
       };
       if (img.complete && img.naturalWidth) setNote(); else img.addEventListener('load', setNote);
@@ -639,23 +624,19 @@
 
   const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
   const dateEl = document.getElementById('date');
-  let lastText = '', lastSlot = null, lastThanks = false;
+  let lastText = '', lastSlot = null;
   function tick() {
     refreshPool();
     const { d, text, seed } = nowParts();
     dateEl.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
     document.title = `${text} AI美女時計`;
     const slot = FIXED_TIME ? 0 : Math.floor(Date.now() / SWITCH_MS);   // ?t= 指定時は絵を固定
-    // 上位に入ったばかりの子がいれば、2分間その子を固定で出して「応援ありがとう」を添える
-    const pinId = (manualIdx === null && !FIXED_TIME) ? Votes.thanks() : null;
-    const pinIdx = pinId ? Votes.indexOf(pinId) : -1;
-    const thanksOn = pinIdx >= 0;
-    const thanks = thanksOn ? String(hash(`${pinId}${Votes.enteredAt(pinId)}`)) : (SHOW_MSG ? '1' : '');
-    const slotChanged = !thanksOn && manualIdx === null && slot !== lastSlot;   // 固定中は絵を替えない
-    if (text !== lastText || slotChanged || manualIdx !== null || thanksOn !== lastThanks) {
-      const idx = manualIdx !== null ? manualIdx : thanksOn ? pinIdx : pickIdx(slot);
-      if (text !== lastText || slotChanged || idx !== currentIdx || thanksOn !== lastThanks) show(idx, text, seed, thanks);
-      lastText = text; lastSlot = slot; lastThanks = thanksOn;
+    const thanks = SHOW_MSG ? '1' : '';   // 空でなければ、ボードの一言を書く
+    const slotChanged = manualIdx === null && slot !== lastSlot;   // 固定中(アルバムから開いたとき等)は絵を替えない
+    if (text !== lastText || slotChanged || manualIdx !== null) {
+      const idx = manualIdx !== null ? manualIdx : pickIdx(slot);
+      if (text !== lastText || slotChanged || idx !== currentIdx) show(idx, text, seed, thanks);
+      lastText = text; lastSlot = slot;
       preloadNext(slot);
     }
   }

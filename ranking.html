@@ -24,6 +24,8 @@
   .tx b { display: block; font-size: 15px; font-weight: 700; letter-spacing: .03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tx span { display: block; margin-top: 3px; font-size: 12px; color: #f1eef3a8; }
   .mine { color: var(--accent); margin-left: 8px; }
+  #more { font: inherit; font-size: 14px; letter-spacing: .1em; color: var(--fg); background: #ffffff10; border: 1px solid #ffffff44; border-radius: 22px; padding: 10px 26px; cursor: pointer; }
+  #more:hover { background: #ffffff22; }
   .empty { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: #f1eef3a0; line-height: 2; }
   .empty b { display: block; font-size: 17px; font-weight: 300; letter-spacing: .15em; color: var(--fg); margin-bottom: 6px; }
   .links { position: fixed; z-index: 5; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; gap: 10px; white-space: nowrap; }
@@ -37,36 +39,48 @@
 <p class="lead" id="lead"></p>
 <ol id="list"></ol>
 <div class="links"><a href="album.html">秘密の推しアルバム</a><a href="./">時計に戻る</a></div>
-<script src="cards.js?v=20261018195935"></script>
-<script src="votes.js?v=20261018195935"></script>
+<script src="cards.js?v=20261018233014"></script>
+<script src="votes.js?v=20261018233014"></script>
 <script>
-  const TOP = 30;   // 表示する人数
+  const PAGE = 30;   // 最初に表示する人数。「もっと見る」で、30人ずつ増やす
+  let shown = PAGE, lastRows = [];
   const $ = (id) => document.getElementById(id);
   const esc = (t) => String(t || '').replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
   const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   const mine = (() => { try { const a = JSON.parse(localStorage.getItem('bc_album') || '[]'); return new Set(Array.isArray(a) ? a : []); } catch (e) { return new Set(); } })();
   const DEMO = location.search.includes('demo=1');   // 手元の見た目確認用: ランダムな数で表示する
-  function draw(counts) {
-    const rows = CARDS.map((c, i) => ({ c, i, n: counts[c.id] || 0 })).filter(r => r.n > 0 && !r.c.exclude)
-      .sort((a, b) => (b.n - a.n) || (hash('r' + a.c.id) - hash('r' + b.c.id)));
-    const total = rows.reduce((s, r) => s + r.n, 0);
+  function draw(counts, last) {
+    last = last || {};
+    // 件数が多い順。同点の中では、最近入れられた子が上(時刻が無いときは、決まった順)
+    const rows = CARDS.map((c, i) => ({ c, i, n: counts[c.id] || 0, t: last[c.id] || 0 })).filter(r => r.n > 0 && !r.c.exclude)
+      .sort((a, b) => (b.n - a.n) || (b.t - a.t) || (hash('r' + a.c.id) - hash('r' + b.c.id)));
+    // 同じ件数は、同じ順位(例: 1位, 2位, 2位, 4位…)
+    rows.forEach((r, k) => { r.rank = (k > 0 && rows[k - 1].n === r.n) ? rows[k - 1].rank : k + 1; });
+    lastRows = rows;
+    const total = rows.reduce((s, r) => s + r.n, 0), myN = rows.filter(r => mine.has(r.c.id)).length;
     $('sub').textContent = rows.length ? `${rows.length}人が登場 ・ しおり ${total}件` : '';
-    $('lead').textContent = rows.length ? 'しおりに入れた人が多い順です。あなたが入れている子には、印が付きます。' : '';
+    $('lead').textContent = rows.length ? `しおりに入れた人が多い順です。同じ件数は同じ順位で、同じ中では、最近入れられた子が上です。あなたが入れている子には、印が付きます${myN ? '(あなた: ' + myN + '人)' : ''}。` : '';
     const list = $('list'); list.innerHTML = '';
     if (!rows.length) { list.innerHTML = '<li class="empty"><b>まだ誰もランクインしていません</b>しおりに入れた人が多い子から、ここに並びます。<br>最初の一人になって、推しをランキングに送り込もう。</li>'; return; }
-    rows.slice(0, TOP).forEach((r, k) => {
+    rows.slice(0, shown).forEach((r) => {
       const li = document.createElement('li');
-      li.innerHTML = `<a class="it r${k + 1}" href="./?img=${r.i}&from=album"><span class="rk">${k + 1}</span><img loading="lazy" decoding="async" alt="" src="${encodeURI(r.c.thumb || r.c.src)}"><div class="tx"><b>${esc(r.c.msg) || '&nbsp;'}</b><span>${r.n}人が保存${mine.has(r.c.id) ? '<em class="mine">♥ あなたも保存</em>' : ''}</span></div></a>`;
+      li.innerHTML = `<a class="it r${r.rank}" href="./?img=${r.i}&from=album"><span class="rk">${r.rank}</span><img loading="lazy" decoding="async" alt="" src="${encodeURI(r.c.thumb || r.c.src)}"><div class="tx"><b>${esc(r.c.msg) || '&nbsp;'}</b><span>${r.n}人が保存${mine.has(r.c.id) ? '<em class="mine">♥ あなたも保存</em>' : ''}</span></div></a>`;
       list.appendChild(li);
     });
+    if (rows.length > shown) {
+      const li = document.createElement('li'); li.className = 'empty';
+      li.innerHTML = `<button type="button" id="more">もっと見る(残り ${rows.length - shown}人)</button>`;
+      list.appendChild(li);
+      $('more').addEventListener('click', () => { shown += PAGE; draw(counts, last); });
+    }
   }
   function demoCounts() { const o = {}; CARDS.forEach((c) => { const h = hash('d' + c.id); if (h % 5 < 3) o[c.id] = 1 + (h >> 3) % 60; }); return o; }
-  let last = {};
+  let last = {}, lastT = {};
   try { const o = JSON.parse(localStorage.getItem('bc_counts_v1') || '{}'); if (o && o.c) last = o.c; } catch (e) {}
-  if (DEMO) { draw(demoCounts()); }
+  if (DEMO) { draw(demoCounts(), {}); }
   else {
-    draw(last);
-    const load = () => fetch('/api/counts', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then((j) => { if (j && j.counts) { last = j.counts; try { localStorage.setItem('bc_counts_v1', JSON.stringify({ t: Date.now(), c: last })); } catch (e) {} draw(last); } }).catch(() => {});
+    draw(last, lastT);
+    const load = () => fetch('/api/counts', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then((j) => { if (j && j.counts) { last = j.counts; lastT = j.last || {}; try { localStorage.setItem('bc_counts_v1', JSON.stringify({ t: Date.now(), c: last })); } catch (e) {} draw(last, lastT); } }).catch(() => {});
     load(); setInterval(() => { if (!document.hidden) load(); }, 60000);
   }
 </script>
