@@ -8,7 +8,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AI美女時計</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff' stroke='%23e8588a' stroke-width='8'/%3E%3Cpath d='M50 24v28l18 10' fill='none' stroke='%23333' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300&text=AI%E7%BE%8E%E5%A5%B3%E6%99%82%E8%A8%880123456789%E5%B9%B4%E6%9C%88%E6%97%A5%28%29%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F%E3%81%BF%E3%82%93%E3%81%AA%E3%81%A7%E6%8E%A8%E3%81%97%E6%B4%BB%CE%B2&display=swap" rel="stylesheet">   <!-- タイトル・年月日用(必要な文字だけ読み込む) -->
@@ -148,6 +147,10 @@
     .date { font-size: 11px; }
   }
 </style>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
 <header>
@@ -168,8 +171,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261018233725"></script>
-<script src="votes.js?v=20261018233725"></script>
+<script src="cards.js?v=20261018234205"></script>
+<script src="votes.js?v=20261018234205"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');

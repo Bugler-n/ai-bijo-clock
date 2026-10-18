@@ -32,6 +32,10 @@
   #gate button { font: inherit; padding: 9px; border-radius: 8px; border: 1px solid #ffffff55; background: #ffffff14; color: var(--fg); cursor: pointer; }
   #gate small { color: #ff9fb8; min-height: 1.2em; }
 </style>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
 <div id="gate"><form id="gf"><b>メッセージ確認</b><input id="gp" type="password" placeholder="パスワード" autocomplete="off" autofocus><button type="submit">開く</button><small id="gm"></small></form></div>
@@ -42,7 +46,7 @@
   <small id="cnt"></small>
 </header>
 <div id="grid"></div>
-<script src="cards.js?v=20261018233725"></script>
+<script src="cards.js?v=20261018234205"></script>
 <script>
   // 簡易パスワード(入力値をハッシュで照合するだけの簡易的なもの。データ自体は cards.js から取得できるため、完全な秘匿ではない)
   const SALT = '6266b22dd618c50c', HASH = '7b2744897c389cc96b94e5b073cc15efbf698ced640afd1e2a3f2dfb0d8ad98e';

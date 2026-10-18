@@ -41,6 +41,10 @@
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
   @media (max-width: 520px) { header, .lead { padding-left: 14px; padding-right: 14px; } #grid { padding: 14px 14px 100px; gap: 10px; grid-template-columns: 1fr; } }
 </style>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
 <header><h1>秘密の推しアルバム</h1><span class="count" id="count"></span></header>
@@ -49,8 +53,8 @@
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
 <a id="rk" href="ranking.html">みんなの推しランキング</a>
-<script src="cards.js?v=20261018233725"></script>
-<script src="votes.js?v=20261018233725"></script>
+<script src="cards.js?v=20261018234205"></script>
+<script src="votes.js?v=20261018234205"></script>
 <script>
   const KEY = 'bc_album';
   const load = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
