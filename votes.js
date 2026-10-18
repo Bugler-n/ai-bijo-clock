@@ -59,8 +59,27 @@ const Votes = (() => {
   // しおりを入れた/外したことを送る(失敗しても画面は止めない)。自分の端末の数字にもすぐ反映する
   function report(id, on) {
     remote[id] = Math.max(0, (remote[id] || 0) + (on ? 1 : -1));
+    try { const d = JSON.parse(localStorage.getItem(SK) || '{}'); if (on) d[id] = 1; else delete d[id]; localStorage.setItem(SK, JSON.stringify(d)); } catch (e) {}
     try { fetch('/api/save', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, did, on: !!on }), keepalive: true }).catch(() => {}); } catch (e) {}
   }
+  // 集計が始まる前にアルバムへ入れていた子も、一度だけ集計へ送る(送信済みの子は印を付けて、重ねて送らない。サーバー側も重複は数えない)
+  const SK = 'bc_synced_v1';
+  function syncAlbum() {
+    if (typeof fetch !== 'function') return;
+    let album = [], done = {};
+    try { album = JSON.parse(localStorage.getItem('bc_album') || '[]'); done = JSON.parse(localStorage.getItem(SK) || '{}'); } catch (e) { return; }
+    if (!Array.isArray(album)) return;
+    const todo = album.filter(id => /^[0-9a-f]{8}$/.test(id) && !done[id]).slice(0, 40);   // 一度に最大40件
+    const next = () => {
+      const id = todo.shift(); if (!id) return;
+      fetch('/api/save', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, did, on: true }) })
+        .then(r => r.ok ? r.json() : null).then((j) => {
+          if (j && j.ok) { done[id] = 1; try { localStorage.setItem(SK, JSON.stringify(done)); } catch (e) {} setTimeout(next, 150); }
+        }).catch(() => {});
+    };
+    next();
+  }
+  setTimeout(syncAlbum, 1500); setInterval(() => { if (!document.hidden) syncAlbum(); }, 5 * 60 * 1000);
   // 時計に出る重み: 人気があるほど少し多く出る。全員 0 なら、みんな同じ(穏やかに効かせる)
   const weight = (id) => 1 + Math.sqrt(remote[id] || 0);
 
