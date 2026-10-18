@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>みんなの推しランキング - AI美女時計</title>
+<style>
+  :root { --bg: #0e0c12; --fg: #f1eef3; --accent: #ff8fb8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 22px 24px 4px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 21px; font-weight: 300; letter-spacing: .25em; }
+  h1::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: .9em; vertical-align: .12em; box-shadow: 0 0 10px var(--accent); }
+  .sub { color: #f1eef3a0; font-size: 13px; letter-spacing: .08em; }
+  .lead { padding: 6px 24px 0; margin: 0; color: #f1eef3b8; font-size: 14px; line-height: 1.9; }
+  #list { list-style: none; margin: 0; padding: 16px 24px 110px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .it { display: flex; align-items: center; gap: 12px; background: #1a1720; border: 1px solid #ffffff1a; border-radius: 12px; padding: 8px 14px 8px 8px; text-decoration: none; color: inherit; transition: transform .2s, border-color .2s; }
+  .it:hover { transform: translateY(-2px); border-color: #ffffff55; }
+  .rk { width: 2.2em; text-align: center; font-size: 22px; font-weight: 300; font-variant-numeric: tabular-nums; color: #f1eef3b0; flex: none; }
+  .r1 .rk { color: #ffd27a; font-size: 28px; } .r2 .rk { color: #d8dde6; font-size: 26px; } .r3 .rk { color: #e0a87a; font-size: 26px; }
+  .r1 { border-color: #ffd27a55; } .r2 { border-color: #d8dde633; } .r3 { border-color: #e0a87a44; }
+  .it img { width: 64px; flex: none; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; background: #000; }
+  .tx { min-width: 0; flex: 1; }
+  .tx b { display: block; font-size: 15px; font-weight: 700; letter-spacing: .03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tx span { display: block; margin-top: 3px; font-size: 12px; color: #f1eef3a8; }
+  .mine { color: var(--accent); margin-left: 8px; }
+  .empty { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: #f1eef3a0; line-height: 2; }
+  .empty b { display: block; font-size: 17px; font-weight: 300; letter-spacing: .15em; color: var(--fg); margin-bottom: 6px; }
+  .links { position: fixed; z-index: 5; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; gap: 10px; white-space: nowrap; }
+  .links a { background: #000c; border: 1px solid #ffffff44; border-radius: 22px; padding: 11px 22px; color: var(--fg); font-size: 14px; letter-spacing: .1em; text-decoration: none; backdrop-filter: blur(6px); }
+  .links a:hover { background: #000; border-color: #ffffff99; }
+  @media (max-width: 520px) { header, .lead { padding-left: 14px; padding-right: 14px; } #list { padding: 14px 14px 100px; grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header><h1>みんなの推しランキング</h1><span class="sub" id="sub"></span></header>
+<p class="lead" id="lead"></p>
+<ol id="list"></ol>
+<div class="links"><a href="album.html">秘密の推しアルバム</a><a href="./">時計に戻る</a></div>
+<script src="cards.js?v=20261018173753"></script>
+<script>
+  const TOP = 30;   // 表示する人数
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => String(t || '').replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
+  const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const mine = (() => { try { const a = JSON.parse(localStorage.getItem('bc_album') || '[]'); return new Set(Array.isArray(a) ? a : []); } catch (e) { return new Set(); } })();
+  const DEMO = location.search.includes('demo=1');   // 手元の見た目確認用: ランダムな数で表示する
+  function draw(counts) {
+    const rows = CARDS.map((c, i) => ({ c, i, n: counts[c.id] || 0 })).filter(r => r.n > 0 && !r.c.exclude)
+      .sort((a, b) => (b.n - a.n) || (hash('r' + a.c.id) - hash('r' + b.c.id)));
+    const total = rows.reduce((s, r) => s + r.n, 0);
+    $('sub').textContent = rows.length ? `${rows.length}人が登場 ・ しおり ${total}件` : '';
+    $('lead').textContent = rows.length ? 'しおりに入れた人が多い順です。あなたが入れている子には、印が付きます。' : '';
+    const list = $('list'); list.innerHTML = '';
+    if (!rows.length) { list.innerHTML = '<li class="empty"><b>まだ誰もランクインしていません</b>しおりに入れた人が多い子から、ここに並びます。<br>最初の一人になって、推しをランキングに送り込もう。</li>'; return; }
+    rows.slice(0, TOP).forEach((r, k) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a class="it r${k + 1}" href="./?img=${r.i}&from=album"><span class="rk">${k + 1}</span><img loading="lazy" decoding="async" alt="" src="${encodeURI(r.c.thumb || r.c.src)}"><div class="tx"><b>${esc(r.c.msg) || '&nbsp;'}</b><span>${r.n}人が保存${mine.has(r.c.id) ? '<em class="mine">♥ あなたも保存</em>' : ''}</span></div></a>`;
+      list.appendChild(li);
+    });
+  }
+  function demoCounts() { const o = {}; CARDS.forEach((c) => { const h = hash('d' + c.id); if (h % 5 < 3) o[c.id] = 1 + (h >> 3) % 60; }); return o; }
+  let last = {};
+  try { const o = JSON.parse(localStorage.getItem('bc_counts_v1') || '{}'); if (o && o.c) last = o.c; } catch (e) {}
+  if (DEMO) { draw(demoCounts()); }
+  else {
+    draw(last);
+    const load = () => fetch('/api/counts', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then((j) => { if (j && j.counts) { last = j.counts; try { localStorage.setItem('bc_counts_v1', JSON.stringify({ t: Date.now(), c: last })); } catch (e) {} draw(last); } }).catch(() => {});
+    load(); setInterval(() => { if (!document.hidden) load(); }, 60000);
+  }
+</script>
+</body>
+</html>

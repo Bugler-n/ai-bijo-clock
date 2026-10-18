@@ -32,6 +32,9 @@
   #back { position: fixed; z-index: 5; left: 50%; bottom: 20px; transform: translateX(-50%); white-space: nowrap;
           background: #000c; border: 1px solid #ffffff44; border-radius: 22px; padding: 11px 26px; color: var(--fg);
           font-size: 14px; letter-spacing: .12em; text-decoration: none; backdrop-filter: blur(6px); }
+  #rk { position: fixed; z-index: 5; right: 20px; bottom: 20px; white-space: nowrap; background: #000c; border: 1px solid #ffffff44; border-radius: 22px; padding: 11px 22px; color: var(--fg); font-size: 14px; letter-spacing: .1em; text-decoration: none; backdrop-filter: blur(6px); }
+  #rk:hover { background: #000; border-color: #ffffff99; }
+  @media (max-width: 640px) { #rk { right: auto; left: 50%; transform: translateX(-50%); bottom: 72px; } }
   #back:hover { background: #000; border-color: #ffffff99; }
   #toast { position: fixed; z-index: 5; left: 50%; bottom: 76px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
            background: #000d; border: 1px solid #ffffff33; border-radius: 22px; padding: 10px 20px; font-size: 13px; transition: opacity .3s, transform .3s; }
@@ -45,6 +48,7 @@
 <div id="grid"></div>
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
+<a id="rk" href="ranking.html">みんなの推しランキング</a>
 <script src="cards.js?v=20261018173753"></script>
 <script src="votes.js?v=20261018173753"></script>
 <script>
