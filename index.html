@@ -171,8 +171,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261019175815"></script>
-<script src="votes.js?v=20261019175815"></script>
+<script src="cards.js?v=20261019222238"></script>
+<script src="votes.js?v=20261019222238"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -312,6 +312,118 @@
 
   const measureCtx = document.createElement('canvas').getContext('2d');
   let filterSeq = 0;
+
+  // ---- 手書き風ハート(ボードの一言に「♡」が付いているものだけ、♡の文字を手描きのハートに置き換える) ----
+  // 19種類を、その子の雰囲気に合わせて選ぶ。カードごとに固定(同じカードはいつも同じ形)。線は1筆で描いたようにゆるく揺らす。色はインクの色(currentColor)
+  const HEART = (() => {
+    const rr=(seed,i)=>{const v=Math.sin(seed*12.9898+i*78.233)*43758.5453;return v-Math.floor(v)};
+    // 媒介変数のハート曲線を、揺らしながら1筆で描く。原点中心・高さ約34単位
+    function heartPts(seed,o={}){
+      const {turn=1.07,jit=.9,rot=0,sx=1,sy=1,start=-0.35,n=72}=o,pts=[];
+      // 点ごとのバラつきではなく、ゆっくりした揺れ(低い周波数)だけを足す → 引っかかりのない滑らかな線になる
+      const wob=(k,t)=>{let v=0;for(let f=1;f<=3;f++)v+=Math.sin(2*Math.PI*f*t*(turn>1.5?.5:1)+rr(seed,k*7+f)*6.28)*(rr(seed,k*3+f+40)*.6+.4)/f;return v*jit*.55};
+      for(let i=0;i<=n;i++){const u=i/n,t=start+turn*2*Math.PI*u+Math.PI;
+        const x=16*Math.pow(Math.sin(t),3),y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+        let px=(x*.95+wob(1,u))*sx,py=(y*.95+wob(2,u))*sy-1;
+        const c=Math.cos(rot),s=Math.sin(rot);pts.push([px*c-py*s,px*s+py*c])}
+      return pts}
+    const smooth=p=>{const f=v=>v.toFixed(1);let d=`M${f(p[0][0])} ${f(p[0][1])}`;for(let i=0;i<p.length-1;i++){const a=p[Math.max(i-1,0)],b=p[i],c=p[i+1],e=p[Math.min(i+2,p.length-1)];d+=`C${f(b[0]+(c[0]-a[0])/6)} ${f(b[1]+(c[1]-a[1])/6)} ${f(c[0]-(e[0]-b[0])/6)} ${f(c[1]-(e[1]-b[1])/6)} ${f(c[0])} ${f(c[1])}`}return d};
+    const stroke=(d,w,c)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const closed=(p,c,w)=>`<path d="${smooth(p)}Z" fill="${c}" stroke="${c}" stroke-width="${w}" stroke-linejoin="round"/>`;
+    const HP='M2 -7C-3 -19-21 -15-19 -1C-17 9-6 14 1 22C8 14 19 8 20 -2C21 -13 6 -17 -1 -6Z';
+    // 線の太さ: 縮小して描くハートは、大きさに比例して細くなる(太いままだと黒くつぶれるため)
+    let SW=16, SM=0.5;
+    const HEARTS={
+     'ゆがみ(いびつ)':(c,s)=>stroke(smooth(heartPts(s,{jit:1.7,rot:.12,sx:1.04,sy:.96})),SW,c),
+     '太い線':(c,s)=>stroke(smooth(heartPts(s,{jit:.7})),SW*.95,c),
+     '影つき':(c,s)=>stroke(smooth(heartPts(s+2,{jit:.7})).replace(/(-?\d+\.\d)\s(-?\d+\.\d)/g,(m,a,b)=>(+a+2.6).toFixed(1)+' '+(+b+2.6).toFixed(1)),SW*.65,c)+stroke(smooth(heartPts(s)),SW,c),
+     '手書き線(1筆)':(c,s)=>stroke(smooth(heartPts(s)),SW,c),
+     '矢が刺さる':(c,s)=>stroke(smooth(heartPts(s,{sx:.9,sy:.9})),SW*.75,c)+stroke('M23 -12L0 0M-9 4.5L-15.5 8M-9.3 8.4L-15.5 8L-12 3',SW*.6,c),
+     '落書き(2周)':(c,s)=>stroke(smooth(heartPts(s,{turn:2.05,jit:1.5,sx:1,sy:1})),SW*.85,c),
+     '二重線':(c,s)=>stroke(smooth(heartPts(s,{jit:.8})),SW*.8,c)+stroke(smooth(heartPts(s+7,{jit:.8,start:-.2,turn:1.04})),SW*.7,c),
+    };
+    // 形ごとの、内側(白い部分)が、ベタにならない上限の太さ。実測で、40px 表示でも内側が見える値
+    const CAP = { '手書き線(1筆)': 9, '二重線': 12, 'ゆがみ(いびつ)': 9, '太い線': 9, '落書き(2周)': 12, '矢が刺さる': 8, '影つき': 8 };
+    // 雰囲気ごとのハート(e=上品・和 / c=かわいい / f=元気・ギャル / s=夜・大人っぽい)。雰囲気は cards.js の hm(make_cards.py が備考から判定)
+    const SETS = {
+      e: ['手書き線(1筆)', '二重線', 'ゆがみ(いびつ)'],
+      c: ['手書き線(1筆)', '二重線', 'ゆがみ(いびつ)'],
+      f: ['太い線', '落書き(2周)', 'ゆがみ(いびつ)'],
+      s: ['矢が刺さる', '影つき'],
+    };
+    // viewBox は ±28(原点中心)。1em = 一言の文字サイズ。原点が文字のベースラインの少し上に来るよう縦位置を合わせる
+    return (c) => {
+      const h = hash('heart' + c.id), set = SETS[c.hm] || SETS.c, name = set[h % set.length], seed = (h >>> 8) % 1000;
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '-28 -30 56 56');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.style.cssText = 'display:inline-block;width:2.4em;height:2.4em;vertical-align:-0.15em;margin:-1.2em -0.45em -1.2em 0em;overflow:visible';
+      const sw0 = SW; SW = Math.min(SW, CAP[name] || SW);   // 線の太さは16まで指定できるが、ベタにならない上限(形ごと)で頭打ちにする
+      svg.innerHTML = HEARTS[name]('currentColor', seed); SW = sw0;
+      return svg;
+    };
+  })();
+  // 「！」「？」も手描きの線に置き換える(1筆書き風。カードごとに少しずつ形がちがう)
+  const HEART_EM = 1.95;   // ハート1つ分の幅(文字サイズ比)。文字幅の見積もりに使う
+  let markSeq = 0;
+  const MARK_EM = 1;   // 元の全角「！」「？」と同じ幅(1文字ぶん)にして、まわりの文字の位置・大きさが変わらないようにする
+  function MARK(ch, c, k) {
+    const h = hash('mk' + c.id + k), r = (n) => ((h >>> n) & 255) / 255 - 0.5;   // -0.5〜0.5 の乱数
+    const q = ch === '！' || ch === '!';
+    let d, dot;
+    if (q) {   // 上がやや太く見える、わずかに反った縦線 + 点
+      d = `M${(0.8 + r(0) * 1.6).toFixed(1)} -11.5C${(1.6 + r(4) * 1.4).toFixed(1)} -6 ${(-0.6 + r(8) * 1.4).toFixed(1)} -1 ${(0.2 + r(12) * 1.2).toFixed(1)} 5.2`;
+      dot = [(r(16) * 1.2).toFixed(1), 11.2];
+    } else {   // 手書きのクエスチョン(上の弧 → 首 → 点)
+      d = `M${(-5.2 + r(0) * 1.2).toFixed(1)} -6.4C${(-5 + r(4)).toFixed(1)} -12.4 ${(4.4 + r(8)).toFixed(1)} -13.4 ${(5 + r(12)).toFixed(1)} -7.4C${(5.6 + r(16)).toFixed(1)} -2.8 ${(0.6 + r(20)).toFixed(1)} -2.2 ${(0.2 + r(24)).toFixed(1)} 3.8`;
+      dot = [(0.2 + r(28) * 1.2).toFixed(1), 10.8];
+    }
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '-13 -17 26 32');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'display:inline-block;width:1em;height:1.23em;vertical-align:-0.24em;margin:0;overflow:visible';
+    if (q) {   // 「！」はポップな袋文字(白抜きの太い縁どり)。中を抜いた形を fill-rule:evenodd で描く
+      const rot = (r(0) * 10).toFixed(1), w = 1 + r(8) * 0.16;
+      const bar = 'M-4.8 -9.4C-4.8 -14.2 4.8 -14.2 4.8 -9.4C4.8 -5 2.7 -1.2 2.5 1.6C2.4 3.9 -2.4 3.9 -2.5 1.6C-2.7 -1.2 -4.8 -5 -4.8 -9.4Z'
+        + 'M-2.3 -9.3C-2.3 -11.9 2.3 -11.9 2.3 -9.3C2.3 -5.6 0.9 -2.6 0.7 0C0.6 1.3 -0.6 1.3 -0.7 0C-0.9 -2.6 -2.3 -5.6 -2.3 -9.3Z';
+      const dotp = (cx, cy) => `M${cx - 3.6} ${cy}a3.6 3.6 0 1 0 7.2 0a3.6 3.6 0 1 0 -7.2 0ZM${cx - 1.5} ${cy}a1.5 1.5 0 1 1 3 0a1.5 1.5 0 1 1 -3 0Z`;
+      svg.innerHTML = `<g transform="translate(0 -2.5) rotate(${rot}) scale(${(w * 1.3).toFixed(2)} 1.3)"><path fill="currentColor" fill-rule="evenodd" d="${bar}${dotp(dot[0], 10.6)}"/></g>`;
+      return svg;
+    }
+    // 「？」は、中心線に沿って丸を並べて描く(太さが確実に出る。マーカーで引いた線の見た目)
+    const pts = [], nums = d.match(/-?\d+(\.\d+)?/g).map(Number), P = [];
+    for (let i = 0; i < nums.length; i += 2) P.push([nums[i], nums[i + 1]]);
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24, v = 1 - u;
+      if (P.length === 4) pts.push([v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0], v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1]]);
+      else {   // 「？」: 3次ベジェを2本つなげた形(M + C + C)
+        const seg = u < 0.5 ? 0 : 1, w = seg ? (u - 0.5) * 2 : u * 2, x = 1 - w, A = seg ? P[3] : P[0], B = seg ? P[4] : P[1], C2 = seg ? P[5] : P[2], D = seg ? P[6] : P[3];
+        pts.push([x * x * x * A[0] + 3 * x * x * w * B[0] + 3 * x * w * w * C2[0] + w * w * w * D[0], x * x * x * A[1] + 3 * x * x * w * B[1] + 3 * x * w * w * C2[1] + w * w * w * D[1]]);
+      }
+    }
+    // 「？」も袋文字: 外側の丸の列から、内側の丸の列を抜いて、白抜きの太い縁どりにする(マスク)
+    const mid = 'mk' + (++markSeq), circ = (rad) => pts.map((p) => `<circle cx="${p[0].toFixed(2)}" cy="${p[1].toFixed(2)}" r="${rad}"/>`).join('');
+    svg.innerHTML = `<mask id="${mid}" maskUnits="userSpaceOnUse" x="-20" y="-28" width="40" height="52"><g fill="#fff">${circ(4.6)}<circle cx="${dot[0]}" cy="${dot[1]}" r="3.7"/></g><g fill="#000">${circ(2.1)}<circle cx="${dot[0]}" cy="${dot[1]}" r="1.5"/></g></mask><rect x="-20" y="-28" width="40" height="52" fill="currentColor" mask="url(#${mid})" transform="translate(0 -1.5) scale(1.15)"/>`;
+    return svg;
+  }
+  // 一言(c.msg)を note に入れる。「♡」「！」「？」だけ手描きの絵にし、他の文字はそのまま
+  function fillNote(note, c) {
+    let msg = c.msg || '';
+    if (/[！？!?]/.test(msg)) msg = msg.replace(/♡/g, '');   // 「！」「？」が付く一言には、ハートは付けない
+    const heartMid = /♡./.test(msg);   // 文の途中にある「♡」は、手描きにせず、元の文字のまま使う
+    const keepText = heartMid || Math.random() < 0.35;   // 文末の「♡」も、約35%は元の文字のまま
+    note.textContent = '';
+    let hearts = 0, marks = 0, plain = '';
+    msg.split(/([♡！？!?])/).forEach((p) => {
+      if (!p) return;
+      if (p === '♡' && !keepText) { note.appendChild(HEART(c)); hearts++; }
+      else if (/^[！？!?]$/.test(p)) { note.appendChild(MARK(p, c, marks)); marks++; }
+      else { note.appendChild(document.createTextNode(p)); plain += p; }
+    });
+    note._hearts = hearts;
+    note._marks = marks;
+    note._plain = plain;
+  }
 
   // ---- シーン生成 ----
   function buildScene(idx, text, seed, thanks) {
@@ -454,7 +566,7 @@
         let nfs = (by1 - by0) * H * 0.33;
         try {
           measureCtx.font = `${font.weight} 100px "${font.name}", "Yomogi"`;
-          const w100 = measureCtx.measureText(note.textContent).width;
+          const w100 = measureCtx.measureText(note._plain || note.textContent).width + (note._hearts || 0) * HEART_EM * 100 + (note._marks || 0) * MARK_EM * 100;
           if (w100 > 0) nfs = Math.min(nfs, maxW * 0.94 / (w100 / 100));
         } catch (e) {}
         note.style.fontSize = nfs + 'px';
@@ -473,7 +585,7 @@
     fit();
     if (note) {
       const setNote = () => {
-        note.textContent = c.msg || '';   // images.csv の「ランクインメッセージ」列(ボードの一言)
+        fillNote(note, c);   // images.csv の「ランクインメッセージ」列(ボードの一言)。♡は手描きハートに
         fit();
       };
       if (img.complete && img.naturalWidth) setNote(); else img.addEventListener('load', setNote);
