@@ -171,8 +171,8 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261019233305"></script>
-<script src="votes.js?v=20261019233305"></script>
+<script src="cards.js?v=20261020073651"></script>
+<script src="votes.js?v=20261020073651"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -878,7 +878,8 @@
     const msg = n === 0 ? 'まだ誰も連れて帰っていません'
       : rem === 0 ? '全員の秘密を、あなただけが知っている'
       : rem <= 20 ? `あと${rem}人。コンプリートが見えてきた`
-      : n < 5 ? `最初の一人。あと${rem}人が待っている`
+      : n === 1 ? `最初の一人。あと${rem}人が待っている`
+      : n < 5 ? `${n}人。あと${rem}人が待っている`
       : n < 20 ? `${n}人。もう、あと戻りできない`
       : `${n}人。残る${rem}人の秘密は、まだ闇の中`;
     const aN = document.getElementById('alinkN');
