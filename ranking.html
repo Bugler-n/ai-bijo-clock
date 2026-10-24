@@ -43,15 +43,13 @@
 <p class="lead" id="lead"></p>
 <ol id="list"></ol>
 <div class="links"><a href="album.html">秘密の推しアルバム</a><a href="./">時計に戻る</a></div>
-<script src="cards.js?v=20261024155109"></script>
-<script src="votes.js?v=20261024155109"></script>
+<script src="cards.js?v=20261024184140"></script>
+<script src="common.js?v=20261024184140"></script>
+<script src="votes.js?v=20261024184140"></script>
 <script>
   const PAGE = 30;   // 最初に表示する人数。「もっと見る」で、30人ずつ増やす
   let shown = PAGE, lastRows = [];
-  const $ = (id) => document.getElementById(id);
-  const esc = (t) => String(t || '').replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
-  const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-  const mine = (() => { try { const a = JSON.parse(localStorage.getItem('bc_album') || '[]'); return new Set(Array.isArray(a) ? a : []); } catch (e) { return new Set(); } })();
+  const mine = new Set(Album.load());
   const DEMO = location.search.includes('demo=1');   // 手元の見た目確認用: ランダムな数で表示する
   function draw(counts, last) {
     last = last || {};

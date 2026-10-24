@@ -171,8 +171,9 @@
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261024155109"></script>
-<script src="votes.js?v=20261024155109"></script>
+<script src="cards.js?v=20261024184140"></script>
+<script src="common.js?v=20261024184140"></script>
+<script src="votes.js?v=20261024184140"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
@@ -217,11 +218,6 @@
   const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
 
   // ---- 時刻 → 画像(同じ分なら同じ絵。前の分とは必ず別の絵) ----
-  function hash(s) {
-    let h = 2166136261;
-    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-    return h >>> 0;
-  }
   // 時計に使う画像(exclude 指定を除く)。?img=N での直接指定は除外画像も表示できる
   let POOL = [];
   function refreshPool() {
@@ -852,9 +848,6 @@
   setInterval(updateSec, 250);
 
   // ---- 推しアルバム(しおり): この端末のブラウザにだけ保存。サーバーには送らない ----
-  const FAV_KEY = 'bc_album';
-  const favLoad = () => { try { const a = JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
-  const favSave = (a) => { try { localStorage.setItem(FAV_KEY, JSON.stringify(a)); } catch (e) {} };
   const favEl = document.getElementById('fav'), favMsg = document.getElementById('favMsg');
   const ADD_MSG = ['アルバムに、そっと入れました', 'いい目をしてますね。保存しました', 'あなたの推し、1枚追加です', 'このまなざし、持ち帰りました', 'ひとりじめしても、いいんですよ'];
   const DEL_MSG = ['そっと見送りました', 'またどこかで会えますように'];
@@ -869,7 +862,7 @@
     favMsg.style.left = x + 'px'; favMsg.style.top = y + 'px';
     favMsg.classList.add('show'); clearTimeout(favTimer); favTimer = setTimeout(() => favMsg.classList.remove('show'), 2600); }
   function syncFav() {
-    const c = CARDS[currentIdx], list = favLoad(), on = !!c && list.includes(c.id);
+    const c = CARDS[currentIdx], list = Album.load(), on = !!c && list.includes(c.id);
     favEl.classList.toggle('on', on); favEl.setAttribute('aria-pressed', on);
     document.getElementById('favT').textContent = on ? 'アルバムに入っています' : 'アルバムに入れる';
     const n = list.length;
@@ -887,11 +880,11 @@
   }
   function toggleFav() {
     const c = CARDS[currentIdx]; if (!c) return;
-    let list = favLoad(), msg;
+    let list = Album.load(), msg;
     if (list.includes(c.id)) { list = list.filter(x => x !== c.id); msg = DEL_MSG[Math.floor(Math.random() * DEL_MSG.length)]; }
     else { list.push(c.id); msg = c.popup || ADD_MSG[Math.floor(Math.random() * ADD_MSG.length)]; }   // その子ごとの一言(なければ共通の文)
     try { Votes.report(c.id, list.includes(c.id)); } catch (e) {}   // 全体の集計へ送る
-    favSave(list); syncFav();   // ボタンの文字が変わって幅が変わってから、その右隣に一言を出す
+    Album.save(list); syncFav();   // ボタンの文字が変わって幅が変わってから、その右隣に一言を出す
     favSay(msg);
     favEl.classList.remove('pop'); void favEl.offsetWidth; favEl.classList.add('pop');
   }

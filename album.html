@@ -53,15 +53,11 @@
 <div id="toast" role="status"></div>
 <a id="back" href="./">時計に戻る</a>
 <a id="rk" href="ranking.html">みんなの推しランキング</a>
-<script src="cards.js?v=20261024155109"></script>
-<script src="votes.js?v=20261024155109"></script>
+<script src="cards.js?v=20261024184140"></script>
+<script src="common.js?v=20261024184140"></script>
+<script src="votes.js?v=20261024184140"></script>
 <script>
-  const KEY = 'bc_album';
-  const load = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
-  const save = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
   const byId = new Map(CARDS.map((c, i) => [c.id, { c, i }]));
-  const esc = (t) => String(t).replace(/[<>&"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m]));
-  const $ = (id) => document.getElementById(id);
   let toastTimer;
   const say = (t) => { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800); };
 
@@ -73,8 +69,8 @@
     : '写真集みたいになってきた。';
 
   function render() {
-    const ids = load().filter(id => byId.has(id));   // 公開から外れた子は静かに消える
-    save(ids);
+    const ids = Album.load().filter(id => byId.has(id));   // 公開から外れた子は静かに消える
+    Album.save(ids);
     $('count').textContent = ids.length ? `${ids.length}人` : '';
     $('lead').textContent = leadFor(ids.length);
     const grid = $('grid'); grid.innerHTML = '';
@@ -83,9 +79,10 @@
       const { c, i } = byId.get(id);
       const d = document.createElement('div'); d.className = 'pic';
       d.innerHTML = `<a href="./?img=${i}&from=album"><img loading="lazy" decoding="async" alt="" src="${encodeURI(c.thumb || c.src)}"><div class="cap">${c.secret ? '<p class="sec">' + esc(c.secret) + '</p>' : ''}</div></a><button class="x" type="button" aria-label="アルバムから外す" title="アルバムから外す">✕</button>`;
-      d.querySelector('.x').addEventListener('click', () => { save(load().filter(x => x !== id)); try { Votes.report(id, false); } catch (e) {} say('そっと見送りました。また会えますように'); render(); });
+      d.querySelector('.x').addEventListener('click', () => { Album.save(Album.load().filter(x => x !== id)); try { Votes.report(id, false); } catch (e) {} say('そっと見送りました。また会えますように'); render(); });
       grid.appendChild(d);
     });
+    fitText();
   }
   // メッセージが2行に収まるよう、はみ出すときだけ文字を少し小さくする(下限 10.5px)
   function fitText() {
@@ -94,8 +91,6 @@
       while (fs > 10.5 && el.clientHeight > fs * 1.7 * 2 + 4) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
     });
   }
-  const _render = render;
-  render = function () { _render(); fitText(); };
   addEventListener('resize', fitText);
   addEventListener('storage', render);
   render();
