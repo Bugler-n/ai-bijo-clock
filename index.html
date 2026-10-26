@@ -121,6 +121,9 @@
   #vlink small { display: block; padding-left: calc(5px + .9em * 16 / 14); }
   #vlink small { margin-top: 4px; font-size: 14px; letter-spacing: .1em; color: #f1eef380; }
   #vlink:hover b, #vlink:hover small { color: #fff; }
+  #about { position: fixed; z-index: 4; left: 50%; bottom: 4px; transform: translateX(-50%); color: #f1eef350; font-size: 10px; letter-spacing: .1em; text-decoration: none; }
+  .bare #about { display: none; }
+  #about:hover { color: #fff; }
   #alink { display: block; color: #f1eef3a0; text-decoration: none; line-height: 1.3; }
   #alink b { display: block; font-size: 16px; font-weight: 300; letter-spacing: .2em; color: var(--fg); }
   #alink small { display: block; margin-top: 4px; font-size: 13px; letter-spacing: .1em; color: #f1eef380; }
@@ -168,12 +171,13 @@
 <div id="vbar">
   <a id="alink" href="album.html"><b>秘密の推しアルバム</b><small><span id="alinkN">まだ誰も連れて帰っていません</span><i id="vbase"></i></small></a>
 </div>
+<a id="about" href="about.html">免責事項</a>
 <button id="fs" type="button" aria-label="全画面表示">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
 </button>
-<script src="cards.js?v=20261026230110"></script>
-<script src="common.js?v=20261026230110"></script>
-<script src="votes.js?v=20261026230110"></script>
+<script src="cards.js?v=20261026233826"></script>
+<script src="common.js?v=20261026233826"></script>
+<script src="votes.js?v=20261026233826"></script>
 <script>
 (() => {
   const screen = document.getElementById('screen');
